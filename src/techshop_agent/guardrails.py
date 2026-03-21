@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from langfuse.decorators import observe
+from langfuse import observe
 
 
 class GuardrailsManager:

@@ -12,5 +12,5 @@ class AgentResponse(BaseModel):
 
     answer: str
     confidence: Literal["high", "medium", "low"]
-    category: Literal["product", "complaint", "general", "out_of_scope"]
+    category: Literal["product", "faq", "complaint", "general", "out_of_scope"]
     requires_human: bool

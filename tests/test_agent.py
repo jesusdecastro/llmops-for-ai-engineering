@@ -15,6 +15,10 @@ def mock_config() -> AgentConfig:
         langfuse_public_key="test-pk",
         langfuse_secret_key="test-sk",
         langfuse_host="http://localhost:3000",
+        otel_exporter_otlp_endpoint="http://localhost:4318/v1/traces",
+        otel_exporter_otlp_headers="Authorization=Basic test",
+        langfuse_prompt_name="techshop-system-prompt",
+        langfuse_prompt_label="production",
     )
 
 
@@ -51,4 +55,4 @@ def test_config_validation() -> None:
     )
 
     with pytest.raises(ValueError, match="Langfuse credentials not configured"):
-        config.validate()
+        config.validate_config()
