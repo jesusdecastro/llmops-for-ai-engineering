@@ -1,0 +1,41 @@
+# Configuración AWS (alineada con ConfigValidator)
+# Copiar a aws-config.yaml y personalizar
+
+aws:
+  profile: default
+  region: us-east-1
+
+project:
+  name: langfuse-workshop
+  environment: training
+  owner: instructor@example.com
+
+instance:
+  type: t3.xlarge
+  volume_size: 100
+
+networking:
+  vpc_cidr: 10.0.0.0/16
+  public_subnet_cidr: 10.0.1.0/24
+
+security:
+  ssh_allowed_cidrs:
+    - 203.0.113.0/24
+  langfuse_allowed_cidrs:
+    - 0.0.0.0/0
+  enable_https: false
+  langfuse_port: 3000
+
+monitoring:
+  alert_email: instructor@example.com
+  enable_cloudwatch: true
+  log_retention_days: 7
+
+ssm:
+  parameter_prefix: /langfuse/workshop
+
+tags:
+  Project: LLMOps-Workshop
+  Environment: Training
+  ManagedBy: Terraform
+  CostCenter: Training
