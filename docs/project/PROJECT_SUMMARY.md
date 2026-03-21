@@ -46,9 +46,16 @@ techshop-agent/
 ├── pyproject.toml               # Configuración del proyecto (hatchling)
 ├── Makefile                     # Comandos útiles
 ├── README.md                    # Documentación principal
-├── SETUP.md                     # Guía de instalación
-├── CONTRIBUTING.md              # Guía de contribución
-└── PROJECT_SUMMARY.md           # Este archivo
+└── docs/                        # Documentación organizada
+    ├── getting-started/
+    │   ├── QUICKSTART.md        # Inicio rápido
+    │   └── SETUP.md             # Guía de instalación
+    ├── architecture/
+    │   └── ARCHITECTURE.md      # Arquitectura del sistema
+    ├── deployment/
+    │   └── infraestructura_aws.md # Documentación de despliegue AWS
+    └── project/
+        └── PROJECT_SUMMARY.md   # Este archivo
 ```
 
 ## Características Clave

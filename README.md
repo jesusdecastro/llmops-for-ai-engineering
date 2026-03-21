@@ -2,7 +2,7 @@
 
 Agente de atención al cliente para TechShop, diseñado para el curso de LLMOps con AWS Bedrock (Strands Agent), Langfuse y promptfoo.
 
-> **🚀 Quickstart**: ¿Primera vez? Lee [QUICKSTART.md](QUICKSTART.md) para empezar en 5 minutos.
+> **🚀 Quickstart**: ¿Primera vez? Lee [QUICKSTART.md](docs/getting-started/QUICKSTART.md) para empezar en 5 minutos.
 
 ## Estructura del Proyecto
 
@@ -101,9 +101,10 @@ Este proyecto está diseñado para el curso de LLMOps. Los alumnos trabajarán e
 
 ## Documentación Adicional
 
-- [SETUP.md](SETUP.md) - Guía detallada de instalación y configuración
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Guía de contribución y convenciones
-- [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Resumen técnico del proyecto
+- [SETUP.md](docs/getting-started/SETUP.md) - Guía detallada de instalación y configuración
+- [CONTRIBUTING.md](docs/project/CONTRIBUTING.md) - Guía de contribución y convenciones
+- [PROJECT_SUMMARY.md](docs/project/PROJECT_SUMMARY.md) - Resumen técnico del proyecto
+- [Índice de documentación](docs/README.md) - Navegación completa por áreas
 
 ## Estructura de Módulos
 

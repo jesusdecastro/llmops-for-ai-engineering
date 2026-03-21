@@ -139,7 +139,7 @@ git commit   # Intentar de nuevo
 
 1. ✓ Setup completado
 2. → Leer [README.md](README.md) para entender el proyecto
-3. → Revisar [CONTRIBUTING.md](CONTRIBUTING.md) para convenciones
+3. → Revisar [CONTRIBUTING.md](../project/CONTRIBUTING.md) para convenciones
 4. → Empezar con los ejercicios del Día 1
 
 ## Recursos Útiles
