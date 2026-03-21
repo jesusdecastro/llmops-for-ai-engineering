@@ -19,3 +19,37 @@ repos:
         args: [--fix]
       # Formatter
       - id: ruff-format
+
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.407
+    hooks:
+      - id: pyright
+        args: [src/techshop_agent]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        args: [-q, -r, src/techshop_agent]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--exclude-files, '^tests/']
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.95.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+        args:
+          - --tf-init-args=-backend=false
+
+  - repo: local
+    hooks:
+      - id: pytest-unit
+        name: pytest-unit
+        entry: pytest tests/ -q
+        language: system
+        pass_filenames: false
