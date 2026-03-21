@@ -1,0 +1,22 @@
+{
+  "name": "pretooluse-risk-guard",
+  "event": "PreToolUse",
+  "rules": [
+    {
+      "match": {
+        "tools": ["run_in_terminal"],
+        "contains": ["terraform destroy", "aws iam", "rm -rf", "Remove-Item -Recurse -Force"]
+      },
+      "action": "ask",
+      "message": "High-risk command detected. Require explicit human confirmation before continuing."
+    },
+    {
+      "match": {
+        "tools": ["apply_patch"],
+        "contains": ["LANGFUSE_SECRET_KEY", "AWS_SECRET_ACCESS_KEY", "BEGIN PRIVATE KEY"]
+      },
+      "action": "block",
+      "message": "Potential secret material detected in patch content."
+    }
+  ]
+}

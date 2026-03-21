@@ -1,0 +1,28 @@
+{
+  "name": "posttooluse-quality-gates",
+  "event": "PostToolUse",
+  "rules": [
+    {
+      "match": {
+        "tools": ["apply_patch"]
+      },
+      "action": "run",
+      "commands": [
+        "ruff check src/ tests/ examples/",
+        "ruff format --check src/ tests/ examples/",
+        "pytest tests/ -q"
+      ]
+    },
+    {
+      "match": {
+        "tools": ["apply_patch"],
+        "paths": ["infrastructure/terraform/**"]
+      },
+      "action": "run",
+      "commands": [
+        "terraform -chdir=infrastructure/terraform fmt -recursive -check",
+        "terraform -chdir=infrastructure/terraform validate"
+      ]
+    }
+  ]
+}
