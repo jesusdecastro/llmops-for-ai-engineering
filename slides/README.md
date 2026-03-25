@@ -1,6 +1,9 @@
 # 🎓 LLMOps Course — Slides y Material Interactivo
 
 Contenido de cada módulo de slides, optimizado para generar presentaciones en **Gamma.app**.
+← [Volver al README principal](../README.md) · [Documentación](../docs/README.md) · [Notebooks](../notebooks/README.md)
+
+---
 
 ## Cómo usar en Gamma.app
 
@@ -13,40 +16,29 @@ Contenido de cada módulo de slides, optimizado para generar presentaciones en *
 - Cada `## Slide N:` se convierte en una slide
 - Las tablas se renderizan automáticamente
 - Los bloques de código se formatean bien
-- Elimina las secciones KAHOOT/PADLET antes de pegar (esas son para tu uso)
+
+> Las actividades interactivas (Kahoot, Padlet) están en [INSTRUCTOR_ACTIVITIES.md](INSTRUCTOR_ACTIVITIES.md), separadas del contenido de Gamma.app.
 
 ## Estructura por día
 
-### Día 1 — Observabilidad
+### Día 1 — Desarrollo Profesional
 | Módulo | Archivo | Hora | Contenido |
 |--------|---------|------|-----------|
-| M1 | [M1_que_es_llmops.md](day_1/M1_que_es_llmops.md) | 09:00-10:30 | ¿Qué es LLMOps? Ciclo. MLOps vs LLMOps |
-| M2 | [M2_observabilidad_langfuse.md](day_1/M2_observabilidad_langfuse.md) | 10:45-12:15 | Observabilidad, Langfuse, Trace→Span→Generation |
+| M1 | [M1_que_es_llmops.md](day_1/M1_que_es_llmops.md) | 09:00-10:30 | ¿Qué es LLMOps? Ciclo. Testing de agentes. Notebook a producción |
+| M2 | [M2_desarrollo_profesional.md](day_1/M2_desarrollo_profesional.md) | 10:45-12:15 | Observabilidad (Langfuse) + Prompt Management (drift, labels, rollback) |
 
-### Día 2 — Prompt Management + Evaluación
+### Día 2 — Evaluación + Deploy
 | Módulo | Archivo | Hora | Contenido |
 |--------|---------|------|-----------|
-| M3 | [M3_prompt_management.md](day_2/M3_prompt_management.md) | 09:00-10:30 | Prompt drift, versionado, labels, rollback |
-| M4 | [M4_evaluacion_agentica.md](day_2/M4_evaluacion_agentica.md) | 10:45-12:15 | Eval determinística, LLM-as-judge, CI/CD |
+| M3 | [M3_evaluacion_agentica.md](day_2/M3_evaluacion_agentica.md) | 09:00-10:30 | Eval determinística, LLM-as-judge, datasets, dimensiones agente |
+| M4 | [M4_cicd_quality_gate.md](day_2/M4_cicd_quality_gate.md) | 10:45-12:15 | CI/CD para LLMs, quality gate, prompt deploy, GitHub Actions |
 
 ### Día 3 — Guardrails + Producción
 | Módulo | Archivo | Hora | Contenido |
 |--------|---------|------|-----------|
 | M5 | [M5_guardrails_safety.md](day_3/M5_guardrails_safety.md) | 09:00-10:30 | Guardrails, Bedrock, PII, prompt injection |
-| M6 | [M6_cicd_produccion.md](day_3/M6_cicd_produccion.md) | 10:45-12:15 | CI/CD para LLMs, pipeline completo, visión producción |
+| M6 | [M6_pipeline_produccion.md](day_3/M6_pipeline_produccion.md) | 10:45-12:15 | Pipeline integrado, visión producción, gaps y arquitectura |
 
-## Kahoot y Padlet
+## Actividades del instructor
 
-Cada módulo incluye al final:
-- **🎯 KAHOOT**: 4-8 preguntas de opción múltiple (con respuesta correcta marcada ✅)
-- **📝 PADLET**: Un prompt para actividad participativa
-
-### Resumen de interactivos
-
-| Momento | Tipo | Prompt |
-|---------|------|--------|
-| Después M1 | Padlet | "¿Qué puede fallar en un agente de IA en producción?" |
-| Después M3 | Padlet | "¿Qué regla añadirías al system prompt v1?" |
-| Después M4 | Padlet | "Diseña un test case para el agente TechShop" |
-| Después M5 | Padlet | "Escribe un input adversarial para el agente" |
-| Después M6 | Padlet | "¿Qué implementarías PRIMERO en producción?" |
+Kahoot y Padlet están en [INSTRUCTOR_ACTIVITIES.md](INSTRUCTOR_ACTIVITIES.md) — separados del contenido de slides para no mezclarlos en Gamma.app.

@@ -1,6 +1,9 @@
 # 📓 LLMOps Course — Notebooks
 
 Notebooks incrementales del curso de LLMOps. Cada notebook construye sobre el anterior, añadiendo una capa de operacionalización al agente TechShop.
+← [Volver al README principal](../README.md) · [Documentación](../docs/README.md) · [Slides](../slides/README.md)
+
+---
 
 ## Setup rápido
 
@@ -28,26 +31,26 @@ uv run jupyter notebook
 
 ## Estructura
 
-### Día 1 — Observabilidad
+### Día 1 — Desarrollo Profesional
 
 | Notebook | Tema | Resultado |
 |----------|------|-----------|
-| [01_setup_agent](day_1/01_setup_agent.ipynb) | Setup + Primer agente | Agente TechShop funcionando con Bedrock |
-| [02_observability](day_1/02_observability.ipynb) | Langfuse tracing | Agente instrumentado, trazas en dashboard |
+| [01_setup_agent](day_1/01_setup_agent.ipynb) | Agente + Observabilidad | Agente TechShop con Bedrock, instrumentado con Langfuse |
+| [02_prompt_management](day_1/02_prompt_management.ipynb) | Prompt Management | Prompt v1 → v2 en Langfuse con labels y rollback |
 
-### Día 2 — Prompt Management + Evaluación
+### Día 2 — Evaluación + Deploy
 
 | Notebook | Tema | Resultado |
 |----------|------|-----------|
-| [03_prompt_management](day_2/03_prompt_management.ipynb) | Prompt versioning | Prompt v1 → v2 en Langfuse con labels |
-| [04_evaluation](day_2/04_evaluation.ipynb) | Evaluación del agente | Test suite + LLM-as-judge + comparación v1/v2 |
+| [03_evaluation](day_2/03_evaluation.ipynb) | Evaluación del agente | Test suite + LLM-as-judge + datasets en Langfuse |
+| [04_cicd_gate](day_2/04_cicd_gate.ipynb) | CI/CD Quality Gate | Pipeline automatizado con pass/fail gate (>= 80%) |
 
 ### Día 3 — Guardrails + Pipeline
 
 | Notebook | Tema | Resultado |
 |----------|------|-----------|
 | [05_guardrails](day_3/05_guardrails.ipynb) | Bedrock Guardrails | Agente con protección input/output |
-| [06_full_pipeline](day_3/06_full_pipeline.ipynb) | Pipeline completo | Todo integrado: trazas + prompt + eval + guardrails |
+| [06_full_pipeline](day_3/06_full_pipeline.ipynb) | Pipeline completo | Todo integrado: trazas + prompt + eval + CI/CD + guardrails |
 
 ## Requisitos
 
@@ -63,6 +66,6 @@ uv run jupyter notebook
 | `AWS_SECRET_ACCESS_KEY` | Credencial AWS | Todos |
 | `AWS_DEFAULT_REGION` | Región AWS (default: us-east-1) | Todos |
 | `MODEL_ID` | Modelo Bedrock | Todos |
-| `LANGFUSE_PUBLIC_KEY` | API key pública Langfuse | NB2+ |
-| `LANGFUSE_SECRET_KEY` | API key secreta Langfuse | NB2+ |
-| `LANGFUSE_HOST` | URL Langfuse Cloud | NB2+ |
+| `LANGFUSE_PUBLIC_KEY` | API key pública Langfuse | NB1+ |
+| `LANGFUSE_SECRET_KEY` | API key secreta Langfuse | NB1+ |
+| `LANGFUSE_HOST` | URL Langfuse Cloud | NB1+ |

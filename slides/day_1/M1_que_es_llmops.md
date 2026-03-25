@@ -1,7 +1,7 @@
 # M1 — ¿Qué es LLMOps? El Ciclo. El Agente TechShop.
 ## Día 1 · Bloque 1 · 09:00 – 10:30
 
-> **Prompt para Gamma.app:** Crea una presentación educativa para ingenieros junior sobre LLMOps. Estilo profesional y moderno, con fondos oscuros. Tema: "Del prototipo al producto con agentes de IA". Audiencia: ingenieros recién graduados con conocimiento de GenAI pero sin experiencia en producción. Tono: directo, profesional, con ejemplos reales. Incluye diagramas y tablas, pocas palabras por slide.
+> **Prompt para Gamma.app:** Crea una presentación educativa para ingenieros junior sobre LLMOps. Estilo profesional y moderno, con fondos oscuros. Tema: "Del prototipo al producto con agentes de IA". Audiencia: ingenieros recién graduados con conocimiento de GenAI pero sin experiencia en producción. Tono: directo, profesional, con ejemplos concretos del propio proyecto del curso. Incluye diagramas y tablas, pocas palabras por slide. Hilo narrativo: "tu agente funciona en local → hay un tipo de fallo nuevo que no detectas con herramientas clásicas → LLMOps es la disciplina → el ciclo es el marco → TechShop es donde lo practicamos".
 
 ---
 
@@ -22,36 +22,43 @@ Día 1: ¿Qué está fallando y cómo me entero?
 - Funciona en tu notebook ✅
 - Funciona con tus datos de prueba ✅
 - Funciona cuando lo usa alguien que no eres tú... ❓
-- Funciona cuando lo usan 1.000 personas a la vez... ❓
 - Funciona cuando el modelo cambia de versión... ❓
+- Funciona cuando alguien intenta romperlo a propósito... ❓
 
-> 📊 **Dato:** El 73% de los deployments de LLMs no llegan a producción o fallan en los primeros 90 días.
+> La mayoría de agentes LLM nunca llegan a producción. No por falta de modelo, sino por falta de proceso.
 
-*Speaker notes: Arranca con esta pregunta. Deja que los alumnos respondan. La idea es que sientan que hasta ahora han vivido en un entorno controlado.*
+*Speaker notes: Arranca con esta pregunta. Deja que los alumnos respondan. La idea es que sientan que hasta ahora han vivido en un entorno controlado. No es un problema de inteligencia del modelo — es un problema de ingeniería.*
 
 ---
 
-## Slide 3: Casos reales — Esto pasa en empresas de verdad
+## Slide 3: Dos tipos de fallos — y solo detectas uno
 
-**Zalando** — Pipeline de análisis de postmortems
-- El LLM culpaba a una tecnología por mencionarse en el texto, no por causarlo
-- ~10% de errores de atribución persisten incluso con Claude Sonnet
+**Bug de código — lo detectas con herramientas que ya conoces:**
+```python
+# La herramienta search_catalog tiene un bug en el filtro de precio
+results = search_catalog("portátiles baratos")
+# → Devuelve [], aunque hay 2 portátiles < 1000€
+# → pytest lo detecta. Fix, commit, done.
+```
 
-**Stripe** — Detección de fraude
-- 1.3% del GDP global procesado
-- Card-testing fraud: de 59% a 97% accuracy
+**Fallo de comportamiento del modelo — invisible para tus herramientas:**
+```python
+user: "¿Qué portátiles tenéis para diseño gráfico?"
+agent: "Te recomiendo el MacBook Pro M3 con pantalla Retina..."
+# → TechShop NO vende MacBook. El agente lo inventó.
+# → No hay error. No hay excepción. pytest pasa.
+# → El usuario recibe información falsa con total confianza.
+```
 
-**Banco anónimo** — Chatbot customer service con GPT-4 + RAG
-- Planificado en 3 meses, tardó el triple
-- Problemas: domain knowledge, latencia, compliance
+> **Este segundo tipo de fallo es el problema central de LLMOps.** El modelo falla con respuestas convincentes pero incorrectas — y tus herramientas clásicas no lo detectan.
 
-*Speaker notes: Estos casos anclan el por qué. No son hipotéticos — son de 2024-2025.*
+*Speaker notes: Este es el slide más importante del bloque. Asegúrate de que entiendan la diferencia. Pregunta directamente: "¿cómo detectarías el segundo fallo con un assert?" La respuesta es que no puedes — o al menos no con un assert clásico. Eso justifica todo lo que viene después.*
 
 ---
 
 ## Slide 4: ¿Qué es LLMOps?
 
-**LLMOps = las prácticas, herramientas y procesos para llevar sistemas basados en LLMs a producción y mantenerlos ahí.**
+**LLMOps = las prácticas y herramientas para llevar sistemas basados en LLMs a producción y mantenerlos ahí.**
 
 No es:
 - Entrenar modelos (eso es MLOps)
@@ -59,30 +66,17 @@ No es:
 - DevOps con un LLM encima
 
 Es:
-- Observar qué hace tu agente en producción
-- Evaluar antes de deployar
-- Proteger input y output
-- Versionar prompts como código
-- Iterar con datos reales
+- **Observar** qué hace tu agente en producción (trazas, no solo logs)
+- **Evaluar** antes de deployar (con tests que entienden lenguaje)
+- **Proteger** input y output (guardrails en tiempo real)
+- **Versionar** prompts como código (el prompt es un artefacto)
+- **Iterar** con datos reales (feedback loop continuo)
+
+*Speaker notes: Conecta cada punto con el fallo del slide anterior. "Observar" = detectar que el agente inventó un MacBook. "Evaluar" = tener un test que lo atrape antes del deploy. "Proteger" = que si alguien intenta hacer prompt injection, el sistema lo bloquee.*
 
 ---
 
-## Slide 5: MLOps ≠ LLMOps
-
-| Dimensión | MLOps | LLMOps |
-|-----------|-------|--------|
-| **Outputs** | Espacio finito, determinista | Texto libre, estocástico |
-| **Tipo de fallo** | Error medible (F1, RMSE) | Respuesta plausible pero incorrecta |
-| **Costo principal** | Entrenamiento | Inferencia por token |
-| **Artefacto** | Model weights + datos | Modelo + **prompt** + contexto |
-| **Evaluación** | Métricas numéricas | Métricas + juicio semántico |
-| **Versionado** | Modelo + datos | Modelo + prompt + config RAG |
-
-> 💡 La diferencia clave: en MLOps el modelo falla con un error numérico. En LLMOps el modelo falla con una respuesta convincente pero incorrecta.
-
----
-
-## Slide 6: El Ciclo LLMOps
+## Slide 5: El Ciclo LLMOps
 
 ```
 [Develop] → [Evaluate] → [Deploy] → [Observe]
@@ -92,28 +86,70 @@ Es:
 Transversal: GUARDRAILS (protección en tiempo real)
 ```
 
-| Fase | Pregunta clave | Herramienta del curso |
-|------|----------------|----------------------|
-| Develop | ¿El prompt hace lo que quiero? | Langfuse Prompt Management |
-| Evaluate | ¿Funciona antes de deployar? | Evaluaciones Python + LLM-as-judge |
-| Deploy | ¿Cómo lo pongo en producción? | (Conceptual) |
-| Observe | ¿Qué pasa en producción? | Langfuse Tracing |
-| Guardrails | ¿Qué protejo? | Amazon Bedrock Guardrails |
+| Fase | Pregunta clave | Lo construimos en |
+|------|----------------|-------------------|
+| **Develop** | ¿El prompt hace lo que quiero? | Día 1 |
+| **Evaluate** | ¿Pasa los tests antes de mergear? | Día 2 |
+| **Deploy** | ¿Puedo hacer rollback seguro? | Día 2 |
+| **Observe** | ¿Qué pasa en producción? | Día 1 |
+| **Guardrails** | ¿Qué protejo en tiempo real? | Día 3 |
+
+> Cada fase responde a una pregunta concreta. **El ciclo completo es lo que convierte un prototipo en producto.**
+
+*Speaker notes: Este es el marco organizador de los 3 días. Señálalo con claridad: "todo lo que hagamos encaja en una de estas fases." La observabilidad cierra el ciclo porque los fallos en producción generan nuevos tests.*
 
 ---
 
-## Slide 7: Las 4 categorías de métricas LLMOps
+## Slide 6: Testear un agente no es como testear software
 
-| Categoría | Ejemplos | Se mide con |
-|-----------|----------|-------------|
-| 🔧 **Operacionales** | Latencia P50/P99, throughput, errors | APM + Langfuse |
-| 💰 **Coste** | Tokens in/out, € por request | Langfuse (auto) |
-| ⭐ **Calidad** | Alucinaciones, relevancia, fidelidad | Evaluaciones + LLM-as-judge |
-| 📊 **Uso** | Queries/hora, temas frecuentes | Langfuse Analytics |
+**El output es estocástico y texto libre. Un assert clásico no alcanza.**
 
-> Las categorías 1-2 se miden con herramientas clásicas.
-> Las categorías 3-4 **necesitan herramientas LLMOps específicas**.
-> La categoría 3 — calidad — es la más importante y la más difícil.
+```python
+# Software clásico — funciona
+assert calculate_tax(100) == 21.0
+
+# Agente LLM — esto es insuficiente
+response = agent.run("¿Cuánto cuesta el VoltPhone S?")
+assert response == "El VoltPhone S cuesta 749€."  # ❌ Nunca va a ser exacto
+
+# Agente LLM — lo que realmente necesitas
+assert "749" in response           # ¿contiene el dato correcto?
+assert "MacBook" not in response    # ¿no inventa productos que no vendemos?
+# ¿el tono es profesional? → eso no lo puede hacer un assert
+```
+
+> **Los unit tests no desaparecen** — siguen cubriendo la lógica de tu código. Pero no son suficientes para cubrir el comportamiento del modelo. En el Día 2 veremos cómo añadir esa capa.
+
+*Speaker notes: No entres en detalle sobre tipos de evaluación aquí — eso es contenido de M3. El objetivo es solo que entiendan que hay un gap entre lo que pytest cubre y lo que necesitan. Que se queden con la pregunta, no con la respuesta completa.*
+
+---
+
+## Slide 7: Del notebook a producción
+
+**El camino que construimos en los 3 días:**
+
+```
+ Notebook
+ (pruebas manuales)
+         │
+         ▼
+ Tests automáticos
+ (lógica de código + comportamiento del modelo)
+         │
+         ▼
+ Quality gate en CI
+ (si no pasa los tests, no se mergea)
+         │
+         ▼
+ Producción con observabilidad
+ (trazas → detectar fallos → nuevos tests)
+         │
+         └───────────── feedback loop ───┘
+```
+
+> Cada capa añade una garantía. **La observabilidad cierra el ciclo:** los fallos en producción se convierten en nuevos test cases.
+
+*Speaker notes: Este diagrama es un mapa de ruta — los alumnos lo verán crecer día a día. No entres en detalles de implementación ahora: el CI gate se construye en el Día 2, los guardrails en el Día 3. Aquí solo importa que vean el destino.*
 
 ---
 
@@ -126,65 +162,34 @@ El agente tiene:
 - ❓ **get_faq_answer** — Consultar políticas (envíos, devoluciones, garantías...)
 
 Stack:
-- **Strands Agents** (framework)
+- **Strands Agents** (framework de agentes)
 - **Amazon Bedrock** (modelo de lenguaje)
-- **Langfuse** (observabilidad)
+- **Langfuse** (observabilidad + prompt management)
 - **Python** (todo)
 
-> En los notebooks vais a construir este agente de cero y añadirle capas LLMOps.
+> En los notebooks vais a construir este agente de cero y añadirle cada capa del ciclo LLMOps.
+
+*Speaker notes: Presenta el agente como algo sencillo a propósito. Dos herramientas, un catálogo pequeño, preguntas frecuentes. La complejidad no está en el agente — está en todo lo que le ponemos alrededor para que funcione de forma fiable.*
 
 ---
 
 ## Slide 9: Roadmap de los 3 días
 
-| Día | Pregunta | Qué construimos |
-|-----|----------|-----------------|
-| **1** | ¿Qué está fallando y cómo me entero? | Agente + Observabilidad |
-| **2** | ¿Cómo sé que no rompe antes de producción? | Prompt versioning + Evaluación |
-| **3** | ¿Cómo lo protejo y junto todo? | Guardrails + Pipeline completo |
+| Día | Fases del ciclo | Qué construimos |
+|-----|-----------------|------------------|
+| **1** | **Develop + Observe** | Agente con trazabilidad + Prompt versionado |
+| **2** | **Evaluate + Deploy** | Suite de evaluación + CI/CD quality gate |
+| **3** | **Guardrails + Iterate** | Protección + Pipeline completo |
 
 **Formato:** Mañanas de teoría → Tardes de notebooks prácticos
+
+> Cada día avanza en el ciclo LLMOps. No saltamos entre fases.
 
 ---
 
 ## Slide 10: ¿Preguntas antes de empezar?
 
-**Siguiente bloque:** Observabilidad — ¿por qué y cómo?
+**Siguiente bloque:** Desarrollo profesional — Observabilidad, prompts y herramientas
 
-**Siguiente práctica:** Notebook 1 — Construir el agente TechShop
+**Siguiente práctica:** Notebook 1 — Construir el agente TechShop con instrumentación
 
----
-
-## 🎯 KAHOOT — Después de M1 (5 min)
-
-**Q1:** ¿Qué porcentaje de deployments de LLMs fallan en los primeros 90 días según datos de industria?
-- A) 25%
-- B) 50%
-- C) 73% ✅
-- D) 90%
-
-**Q2:** ¿Cuál es la PRINCIPAL diferencia entre un fallo en MLOps y uno en LLMOps?
-- A) MLOps es más caro
-- B) En LLMOps el fallo parece una respuesta correcta ✅
-- C) MLOps usa Python y LLMOps no
-- D) No hay diferencia
-
-**Q3:** ¿Cuál de estas NO es una fase del ciclo LLMOps?
-- A) Observe
-- B) Evaluate
-- C) Train ✅
-- D) Deploy
-
-**Q4:** ¿Qué categoría de métricas LLMOps es la MÁS difícil de medir?
-- A) Operacionales
-- B) Coste
-- C) Calidad ✅
-- D) Uso
-
----
-
-## 📝 PADLET — Después de M1
-
-**Prompt para el Padlet:** "¿Qué puede fallar en un agente de IA en producción? Pon un ejemplo real o imaginado."
-
-*Objetivo: recoger ideas antes de introducir observabilidad. Después podemos referir a estas respuestas cuando veamos las trazas.*

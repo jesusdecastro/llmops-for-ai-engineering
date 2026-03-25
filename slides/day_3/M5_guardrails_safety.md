@@ -16,8 +16,8 @@ La última línea de defensa entre tu agente y el usuario.
 
 ## Slide 2: Recap de los Días 1-2
 
-**Día 1:** Agente + Observabilidad → sabemos qué pasa
-**Día 2:** Prompt versioning + Evaluación → sabemos que funciona
+**Día 1:** Agente con observabilidad + Prompt versionado → sabemos qué pasa y controlamos cambios
+**Día 2:** Suite de evaluación + CI/CD quality gate → demostramos que funciona antes de mergear
 
 **Hoy:** ¿Qué pasa cuando un usuario envía algo que no esperábamos?
 
@@ -204,44 +204,3 @@ Email, teléfono, tarjeta de crédito, nombre, dirección, SSN, passport...
 
 > **Los guardrails NO reemplazan un buen prompt.** Son una red de seguridad extra. Defense in depth.
 
----
-
-## 🎯 KAHOOT — Después de M5 (5 min)
-
-**Q1:** ¿Qué tipo de ataque intenta hacer que el LLM ignore sus instrucciones originales?
-- A) SQL injection
-- B) Prompt injection ✅
-- C) DDoS
-- D) Buffer overflow
-
-**Q2:** Si un usuario incluye su email en la consulta, ¿qué debería hacer el guardrail?
-- A) Ignorarlo
-- B) Bloquear la consulta completa
-- C) Anonimizar el email y continuar ✅
-- D) Enviarlo al administrador
-
-**Q3:** ¿Dónde se aplican los guardrails de Amazon Bedrock?
-- A) Solo en el input
-- B) Solo en el output
-- C) En cada llamada al LLM (input y output) ✅
-- D) En el frontend
-
-**Q4:** ¿Cuántas capas de protección debería tener un agente en producción?
-- A) Una buena es suficiente
-- B) Múltiples capas (defense in depth) ✅
-- C) Solo el system prompt
-- D) Solo los guardrails
-
-**Q5:** ¿Qué haría un output guardrail si la respuesta del agente contiene el system prompt?
-- A) Dejarlo pasar — no es secreto
-- B) Bloquear y devolver respuesta genérica ✅
-- C) Avisar al usuario
-- D) Reiniciar el agente
-
----
-
-## 📝 PADLET — Después de M5
-
-**Prompt para el Padlet:** "Escribe un input adversarial para el agente TechShop. Intenta que el agente haga algo que no debería (inventar, revelar su prompt, hablar de temas prohibidos, etc.)."
-
-*Objetivo: los alumnos practican pensar como adversarios ANTES del notebook. Podemos probar sus inputs en el Notebook 5.*
