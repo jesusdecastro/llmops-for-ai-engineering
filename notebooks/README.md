@@ -38,20 +38,6 @@ uv run jupyter notebook
 | [01_setup_agent](day_1/01_setup_agent.ipynb) | Agente + Observabilidad | Agente TechShop con Bedrock, instrumentado con Langfuse |
 | [02_prompt_management](day_1/02_prompt_management.ipynb) | Prompt Management | Prompt v1 → v2 en Langfuse con labels y rollback |
 
-### Día 2 — Evaluación + Deploy
-
-| Notebook | Tema | Resultado |
-|----------|------|-----------|
-| [03_evaluation](day_2/03_evaluation.ipynb) | Evaluación del agente | Test suite + LLM-as-judge + datasets en Langfuse |
-| [04_cicd_gate](day_2/04_cicd_gate.ipynb) | CI/CD Quality Gate | Pipeline automatizado con pass/fail gate (>= 80%) |
-
-### Día 3 — Guardrails + Pipeline
-
-| Notebook | Tema | Resultado |
-|----------|------|-----------|
-| [05_guardrails](day_3/05_guardrails.ipynb) | Bedrock Guardrails | Agente con protección input/output |
-| [06_full_pipeline](day_3/06_full_pipeline.ipynb) | Pipeline completo | Todo integrado: trazas + prompt + eval + CI/CD + guardrails |
-
 ## Requisitos
 
 - Python 3.10+
