@@ -38,7 +38,7 @@ Edita `.env` con tus credenciales:
 
 ```env
 # ── AWS Bedrock (obligatorio) ─────────────────────────────────────────
-AWS_REGION=us-east-1
+AWS_REGION=eu-west-1
 # Opción A — perfil IAM:
 AWS_PROFILE=your-profile
 # Opción B — credenciales directas (no recomendado para producción):
@@ -46,7 +46,7 @@ AWS_PROFILE=your-profile
 # AWS_SECRET_ACCESS_KEY=...
 
 # Modelo (usa el inference profile correcto para tu región)
-MODEL_ID=us.anthropic.claude-haiku-4-5-20251001-v1:0
+MODEL_ID=eu.anthropic.claude-haiku-4-5-20251001-v1:0
 
 # ── Langfuse (opcional, activa observabilidad) ────────────────────────
 LANGFUSE_PUBLIC_KEY=pk-lf-...
@@ -156,8 +156,8 @@ font                = "sans serif"
 
 | Variable | Valor por defecto | Descripción |
 |----------|-----------|-------------|
-| `MODEL_ID` | `us.anthropic.claude-haiku-4-5-20251001-v1:0` | Modelo Bedrock |
-| `AWS_REGION` | `us-east-1` | Región AWS |
+| `MODEL_ID` | `eu.anthropic.claude-haiku-4-5-20251001-v1:0` | Modelo Bedrock |
+| `AWS_REGION` | `eu-west-1` | Región AWS |
 | `LANGFUSE_PUBLIC_KEY` | — | Activa tracing si está definida |
 | `LANGFUSE_SECRET_KEY` | — | Par de la clave pública |
 | `LANGFUSE_HOST` | `cloud.langfuse.com` | URL de la instancia Langfuse |
@@ -192,7 +192,7 @@ O asegúrate de que `.env` tiene `AWS_PROFILE` o `AWS_ACCESS_KEY_ID`.
 
 ### El agente responde lento (>5 s)
 
-- Comprueba la región AWS; `us-east-1` suele tener menor latencia.
+- Comprueba la región AWS; `eu-west-1` suele tener menor latencia.
 - Verifica que no hay throttling en Bedrock (panel AWS → Service Quotas).
 
 ### Puerto 8501 en uso

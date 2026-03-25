@@ -64,7 +64,7 @@ uv run jupyter notebook
 |----------|-------------|----------|
 | `AWS_ACCESS_KEY_ID` | Credencial AWS | Todos |
 | `AWS_SECRET_ACCESS_KEY` | Credencial AWS | Todos |
-| `AWS_DEFAULT_REGION` | Región AWS (default: us-east-1) | Todos |
+| `AWS_DEFAULT_REGION` | Región AWS (default: eu-west-1) | Todos |
 | `MODEL_ID` | Modelo Bedrock | Todos |
 | `LANGFUSE_PUBLIC_KEY` | API key pública Langfuse | NB1+ |
 | `LANGFUSE_SECRET_KEY` | API key secreta Langfuse | NB1+ |

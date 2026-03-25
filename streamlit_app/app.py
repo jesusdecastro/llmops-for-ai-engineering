@@ -13,7 +13,12 @@ from dotenv import load_dotenv
 
 # .env está en la raíz del repo, no en streamlit_app/
 _ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(_ENV_FILE)
+load_dotenv(_ENV_FILE, override=True)
+
+# Si el .env trae credenciales explícitas, eliminar AWS_PROFILE para que
+# boto3 no intente usar un perfil con nombre que puede no existir.
+if os.getenv("AWS_ACCESS_KEY_ID"):
+    os.environ.pop("AWS_PROFILE", None)
 
 # ---------------------------------------------------------------------------
 # Página

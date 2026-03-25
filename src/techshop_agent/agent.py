@@ -21,15 +21,15 @@ def create_agent(
 
     Args:
         model_id: Bedrock model ID. Defaults to MODEL_ID env var or Claude Haiku 4.5.
-        region: AWS region. Defaults to AWS_REGION env var or us-east-1.
+        region: AWS region. Defaults to AWS_REGION env var or eu-west-1.
         system_prompt: Override the default system prompt. Defaults to SYSTEM_PROMPT.
 
     Returns:
         A ready-to-use Strands Agent instance.
     """
     model = BedrockModel(
-        model_id=model_id or os.getenv("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"),
-        region_name=region or os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1")),
+        model_id=model_id or os.getenv("MODEL_ID", "eu.anthropic.claude-haiku-4-5-20251001-v1:0"),
+        region_name=region or os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "eu-west-1")),
     )
     return Agent(
         model=model,
