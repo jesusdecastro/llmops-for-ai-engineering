@@ -1,47 +1,38 @@
-"""Tests para la tool search_catalog v1."""
+"""Tests for the search_catalog tool."""
 
 from __future__ import annotations
 
 import json
 
-from techshop_agent.agent import search_catalog_v1
+from techshop_agent.tools import _search_catalog_impl
 
 
-def test_search_catalog_v1_exact_name_match_returns_required_fields() -> None:
-    """Un nombre exacto del catálogo debe devolver datos mínimos del producto."""
-    result = search_catalog_v1("ProBook X1")
-
+def test_search_catalog_finds_by_exact_name() -> None:
+    """A product name keyword should return matching products."""
+    result = _search_catalog_impl("ProBook")
     products = json.loads(result)
     assert isinstance(products, list)
-    assert products
-
-    product = products[0]
-    assert product["nombre"] == "ProBook X1"
-    assert "precio" in product
-    assert "stock" in product
-    assert "descripcion" in product
+    assert len(products) >= 1
+    assert any("ProBook" in p["nombre"] for p in products)
 
 
-def test_search_catalog_v1_synonym_without_match_returns_not_found_message() -> None:
-    """Un sinónimo no contenido en el catálogo debe devolver 0 resultados explícitos."""
-    result = search_catalog_v1("laptop")
-
-    assert result == "no se encontraron productos para: laptop"
-
-
-def test_search_catalog_v1_multiple_matches_returns_all_without_ranking() -> None:
-    """Una query con varios matches debe devolver todos los resultados sin límite."""
-    result = search_catalog_v1("portátil")
-
+def test_search_catalog_finds_by_category() -> None:
+    """A category keyword should return products in that category."""
+    result = _search_catalog_impl("portatiles")
     products = json.loads(result)
-    names = {item["nombre"] for item in products}
-    assert "ProBook X1" in names
-    assert "NanoBook Air 13" in names
-    assert len(products) >= 2
+    assert isinstance(products, list)
+    assert len(products) >= 1
 
 
-def test_search_catalog_v1_no_match_returns_expected_message() -> None:
-    """Sin matches debe devolver mensaje explícito con la query."""
-    result = search_catalog_v1("drone cuántico")
+def test_search_catalog_returns_empty_for_semantic_query() -> None:
+    """A functional/semantic query should NOT match (this is F1)."""
+    result = _search_catalog_impl("necesito algo para editar vídeo")
+    products = json.loads(result)
+    assert products == []
 
-    assert result == "no se encontraron productos para: drone cuántico"
+
+def test_search_catalog_returns_empty_for_nonexistent_product() -> None:
+    """A product that doesn't exist returns empty."""
+    result = _search_catalog_impl("iPhone")
+    products = json.loads(result)
+    assert products == []

@@ -25,15 +25,11 @@ techshop-agent/
 ## Instalación
 
 ```bash
-# Crear entorno virtual con uv
-uv venv
-source .venv/bin/activate  # En Windows: .venv\Scripts\activate
-
-# Instalar el paquete en modo desarrollo
-uv pip install -e ".[dev]"
+# Instalar dependencias (crea .venv automáticamente)
+uv sync
 
 # Instalar pre-commit hooks
-pre-commit install
+uv run pre-commit install
 ```
 
 ## Configuración

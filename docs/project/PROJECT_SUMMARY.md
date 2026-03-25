@@ -64,7 +64,7 @@ techshop-agent/
 
 ```python
 # Instalación en modo desarrollo
-uv pip install -e ".[dev]"
+uv sync
 
 # Import limpio
 from techshop_agent import TechShopAgent, AgentConfig

@@ -1,0 +1,17 @@
+[project]
+name = "llmops-notebooks"
+version = "0.1.0"
+description = "Notebooks del curso LLMOps para AI Engineering — entorno reproducible"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "strands-agents>=0.1.0",
+    "strands-agents-tools>=0.1.0",
+    "langfuse>=3.0.0",
+    "python-dotenv>=1.0.0",
+    "boto3>=1.35.0",
+    "ipykernel>=6.0.0",
+    "jupyter>=1.0.0",
+]
