@@ -85,25 +85,122 @@ Repositorio del curso práctico de **24 horas (3 días)** donde operacionalizas 
 
 ## ⚡ Quickstart
 
+### Requisitos previos
+
+| Herramienta | Versión mínima | Instalación |
+|-------------|---------------|-------------|
+| Python | 3.11+ | [python.org](https://python.org) |
+| uv | 0.5+ | `pip install uv` o `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| AWS CLI | v2 | [docs.aws.amazon.com](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) |
+
+> **Verificar instalaciones:**
+> ```bash
+> python --version         # Python 3.11+
+> uv --version             # uv 0.5+
+> aws --version            # aws-cli/2.x
+> aws sts get-caller-identity  # debe devolver tu Account/UserId
+> ```
+
+---
+
+### Paso 1 — Clonar el repositorio
+
 ```bash
-# 1. Clonar
 git clone <repo-url>
 cd llmops-for-ai-engineering
-
-# 2. Instalar dependencias
-uv sync
-
-# 3. Configurar variables de entorno
-cp .env.example .env   # editar con credenciales AWS y Langfuse
-
-# 4. Ejecutar el agente (ejemplo básico)
-make example
-
-# 5. Ejecutar la interfaz web
-cd streamlit_app && uv sync && streamlit run app.py
 ```
 
-> Guía detallada paso a paso: **[streamlit_app/README.md](streamlit_app/README.md)**
+### Paso 2 — Crear el entorno virtual e instalar dependencias
+
+```bash
+# Crear entorno virtual e instalar all deps (incluye dev + langfuse)
+uv sync
+
+# Verificar que el paquete se instaló correctamente
+uv run python -c "from techshop_agent import create_agent; print('OK')"
+```
+
+> `uv sync` lee `pyproject.toml` y `uv.lock`, crea `.venv/` en la raíz,
+> e instala el paquete `techshop-agent` en modo editable junto con todas
+> las dependencias de desarrollo.
+
+### Paso 3 — Configurar variables de entorno
+
+```bash
+cp .env.example .env
+```
+
+Edita `.env` con tus credenciales:
+
+```env
+# ── AWS Bedrock (obligatorio) ──────────────────────────────────────────────
+AWS_REGION=eu-west-1
+
+# Opción A — perfil IAM configurado con `aws configure`:
+AWS_PROFILE=your-profile-name
+
+# Opción B — credenciales temporales (ej: SSO, asumir rol):
+# AWS_ACCESS_KEY_ID=AKIA...
+# AWS_SECRET_ACCESS_KEY=...
+# AWS_SESSION_TOKEN=...          # solo si son temporales
+
+# Modelo en Bedrock (inference profile cross-region para eu-west-1):
+MODEL_ID=eu.anthropic.claude-haiku-4-5-20251001-v1:0
+
+# ── Langfuse (necesario para observabilidad) ───────────────────────────────
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+```
+
+> Sin Langfuse el agente funciona igualmente; sólo se desactivan las trazas.
+
+### Paso 4 — Ejecutar el ejemplo básico
+
+```bash
+uv run python examples/basic_usage.py
+# o mediante make:
+make example
+```
+
+### Paso 5 — Ejecutar la interfaz web Streamlit
+
+```bash
+# Instalar dependencias del subpaquete UI (solo primera vez)
+cd streamlit_app
+uv sync
+
+# Arrancar la app
+uv run streamlit run app.py --server.port 8501
+# o desde la raíz:
+make streamlit
+```
+
+La app estará disponible en **http://localhost:8501**
+
+> **Nota:** la UI tiene dos modos seleccionables en el sidebar:
+> - 🤖 **Base** — agente sin instrumentación (o con tracing mínimo si Langfuse está configurado)
+> - 📊 **Instrumentado** — agente con tracing completo (spans de herramientas, atributos de sesión, métricas de tokens)
+
+---
+
+### Paso 6 — Ejecutar notebooks del curso
+
+```bash
+# Instalar kernel para jupyter
+uv run python -m ipykernel install --user --name llmops-course
+
+# Abrir VS Code y seleccionar el kernel "llmops-course" en cada notebook
+code notebooks/day_1/01_setup_agent.ipynb
+```
+
+---
+
+### Paso 7 — Ejecutar todos los quality gates
+
+```bash
+make qa   # lint + format-check + typecheck + test + security
+```
 
 ---
 
@@ -145,15 +242,30 @@ cd streamlit_app && uv sync && streamlit run app.py
 ## 🔧 Comandos principales
 
 ```bash
-make dev           # Instala dependencias + pre-commit
-make qa            # lint + format-check + typecheck + test + security
-make test          # pytest tests/ -v
-make lint          # ruff check
-make typecheck     # pyright src/techshop_agent
-make security      # bandit -r src/techshop_agent
-make example       # ejecuta examples/basic_usage.py
-make tf-check      # valida Terraform
-make pre-commit    # pre-commit run --all-files
+# ── Setup ────────────────────────────────
+uv sync                          # instala todo (dev + llmops extras)
+uv sync --no-dev                 # solo dependencias de producción
+
+# ── Desarrollo ───────────────────────────
+make dev                         # uv sync + pre-commit install
+make qa                          # lint + format-check + typecheck + test + security
+
+# ── Checks individuales ────────────────
+make lint                        # ruff check src/ tests/ examples/
+make format                      # ruff format src/ tests/ examples/
+make typecheck                   # pyright src/techshop_agent
+make test                        # pytest tests/ -v
+make security                    # bandit -r src/techshop_agent
+
+# ── Agente ───────────────────────────────
+make example                     # uv run python examples/basic_usage.py
+
+# ── Streamlit UI ─────────────────────────
+make streamlit-install           # cd streamlit_app && uv sync
+make streamlit                   # arranca en http://localhost:8501
+
+# ── Terraform ────────────────────────────
+make tf-check                    # fmt + validate
 ```
 
 ---

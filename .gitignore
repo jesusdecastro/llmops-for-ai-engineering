@@ -48,3 +48,8 @@ langfuse.db
 # promptfoo
 .promptfoo/
 promptfoo-results/
+
+# Course materials (not versioned)
+kahoots/
+slides/
+mdpdf.log

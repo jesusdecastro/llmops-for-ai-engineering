@@ -47,13 +47,20 @@ EXAMPLES: list[str] = [
 
 
 # ---------------------------------------------------------------------------
-# Agente (cacheado a nivel de servidor)
+# Agentes (cacheados a nivel de servidor, uno por modo)
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
-def _build_agent():
+def _build_base_agent() -> object:
     from techshop_agent import create_agent
 
     return create_agent()
+
+
+@st.cache_resource(show_spinner=False)
+def _build_instrumented_agent() -> object:
+    from techshop_agent.solution.observability import create_observed_agent
+
+    return create_observed_agent()
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +70,7 @@ def _init_session() -> None:
     defaults: dict = {
         "messages": [],
         "session_id": f"streamlit-{uuid.uuid4().hex[:8]}",
+        "agent_mode": "base",
         "langfuse_enabled": bool(
             os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY")
         ),
@@ -76,27 +84,47 @@ def _init_session() -> None:
 # Llamada al agente (con tracing Langfuse opcional)
 # ---------------------------------------------------------------------------
 def _call_agent(user_input: str) -> tuple[str, float]:
-    agent = _build_agent()
     start = time.monotonic()
+    mode: str = st.session_state.agent_mode
 
-    if st.session_state.langfuse_enabled:
+    if mode == "instrumented":
+        # ── Modo instrumentado: tracing completo con Langfuse ──────────────
+        # process_query() gestiona internamente el span raíz, los spans de
+        # herramientas y los atributos de sesión. No es necesario envolver
+        # con @observe aquí.
         try:
-            from langfuse.decorators import langfuse_context, observe
+            from techshop_agent.solution.observability import process_query
 
-            @observe(name="streamlit_query")
-            def _traced(query: str) -> str:
-                langfuse_context.update_current_trace(
-                    user_id="streamlit-student",
-                    session_id=st.session_state.session_id,
-                    metadata={"source": "streamlit_app"},
-                )
-                return str(agent(query))
-
-            response = _traced(user_input)
-        except Exception:
-            response = str(agent(user_input))
+            response = process_query(
+                user_input,
+                user_id="streamlit-student",
+                session_id=st.session_state.session_id,
+                source="streamlit_app",
+            )
+        except Exception as exc:
+            response = f"Error: {type(exc).__name__} — {exc}"
     else:
-        response = str(agent(user_input))
+        # ── Modo base: agente sin instrumentación (o con tracing mínimo) ───
+        agent = _build_base_agent()
+
+        if st.session_state.langfuse_enabled:
+            try:
+                from langfuse.decorators import langfuse_context, observe
+
+                @observe(name="streamlit_query")
+                def _traced(query: str) -> str:
+                    langfuse_context.update_current_trace(
+                        user_id="streamlit-student",
+                        session_id=st.session_state.session_id,
+                        metadata={"source": "streamlit_app", "mode": "base"},
+                    )
+                    return str(agent(query))
+
+                response = _traced(user_input)
+            except Exception:
+                response = str(agent(user_input))
+        else:
+            response = str(agent(user_input))
 
     latency_ms = (time.monotonic() - start) * 1000
     return response, latency_ms
@@ -111,7 +139,7 @@ def main() -> None:
     st.title("🛒 TechShop Agent")
     st.caption("Asistente de atención al cliente — Curso LLMOps")
 
-    # Sidebar: sesión + ejemplos
+    # Sidebar: sesión + modo de agente + ejemplos
     with st.sidebar:
         st.markdown(f"**Sesión** `{st.session_state.session_id}`")
 
@@ -120,6 +148,34 @@ def main() -> None:
             st.session_state.session_id = f"streamlit-{uuid.uuid4().hex[:8]}"
             st.rerun()
 
+        # ── Toggle de modo de agente ────────────────────────────────────────
+        st.divider()
+        st.markdown("**Modo del agente**")
+        new_mode = st.radio(
+            label="Selecciona modo:",
+            options=["base", "instrumented"],
+            format_func=lambda x: (
+                "🤖 Base (sin tracing)" if x == "base" else "📊 Instrumentado (Langfuse)"
+            ),
+            index=0 if st.session_state.agent_mode == "base" else 1,
+            key="_mode_radio",
+            label_visibility="collapsed",
+        )
+        if new_mode != st.session_state.agent_mode:
+            st.session_state.agent_mode = new_mode
+            st.session_state.messages = []
+            st.session_state.session_id = f"streamlit-{uuid.uuid4().hex[:8]}"
+            st.rerun()
+
+        if st.session_state.agent_mode == "instrumented":
+            if st.session_state.langfuse_enabled:
+                st.success("✅ Langfuse activo", icon="📊")
+            else:
+                st.warning("⚠️ Langfuse no configurado\n\nDefine LANGFUSE_PUBLIC_KEY y LANGFUSE_SECRET_KEY en .env", icon="⚠️")
+        else:
+            st.info("Sin tracing profundo.\nCambia a **Instrumentado** para ver trazas en Langfuse.", icon="ℹ️")
+
+        # ── Preguntas de ejemplo ────────────────────────────────────────────
         st.divider()
         st.caption("Prueba con estos ejemplos:")
         for ej in EXAMPLES:
