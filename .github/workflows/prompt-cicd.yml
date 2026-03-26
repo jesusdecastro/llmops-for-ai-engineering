@@ -1,0 +1,100 @@
+name: "Prompt CI/CD"
+
+# ─────────────────────────────────────────────────────────────
+# Trigger: solo cuando cambian archivos en prompts/
+# Esto asegura que cambios de código NO disparan este pipeline.
+# ─────────────────────────────────────────────────────────────
+on:
+  push:
+    paths:
+      - "prompts/**"
+    branches:
+      - main
+
+# ─────────────────────────────────────────────────────────────
+# Variables de entorno comunes a todos los jobs
+# ─────────────────────────────────────────────────────────────
+env:
+  PYTHON_VERSION: "3.11"
+  LANGFUSE_BASE_URL: ${{ secrets.LANGFUSE_BASE_URL }}
+  LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+  LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}
+
+jobs:
+  # ───────────────────────────────────────────────────────────
+  # Job 1: CI — Subir prompt a Langfuse con label "staging"
+  # ───────────────────────────────────────────────────────────
+  push-to-langfuse:
+    name: "📤 Push prompt → Langfuse [staging]"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -e ".[llmops]"
+
+      - name: Push prompt to Langfuse
+        run: |
+          python -m techshop_agent.cicd.push_prompt \
+            --file prompts/system_prompt.txt \
+            --labels staging latest \
+            --author "github-actions[bot]"
+
+  # ───────────────────────────────────────────────────────────
+  # Job 2: Quality Gate — Evaluar el prompt en staging
+  # ───────────────────────────────────────────────────────────
+  evaluate:
+    name: "🧪 Evaluate prompt [staging]"
+    needs: push-to-langfuse
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -e ".[llmops]"
+
+      - name: Run evaluation suite
+        run: |
+          python -m techshop_agent.cicd.evaluate_prompt \
+            --label staging \
+            --threshold 0.7
+
+  # ───────────────────────────────────────────────────────────
+  # Job 3: CD — Promover staging → production
+  # ───────────────────────────────────────────────────────────
+  promote:
+    name: "🚀 Promote → production"
+    needs: evaluate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -e ".[llmops]"
+
+      - name: Promote staging to production
+        run: |
+          python -m techshop_agent.cicd.promote_prompt \
+            --from-label staging \
+            --to-label production

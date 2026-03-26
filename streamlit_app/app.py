@@ -45,6 +45,15 @@ EXAMPLES: list[str] = [
     "¿Tenéis garantía extendida?",
 ]
 
+# ---------------------------------------------------------------------------
+# Entornos de prompt (label → display)
+# ---------------------------------------------------------------------------
+ENVIRONMENTS: dict[str, str] = {
+    "🟢 Production": "production",
+    "🟡 Staging": "staging",
+    "🔵 Development": "latest",
+}
+
 
 # ---------------------------------------------------------------------------
 # Agentes (cacheados a nivel de servidor, uno por modo)
@@ -71,6 +80,7 @@ def _init_session() -> None:
         "messages": [],
         "session_id": f"streamlit-{uuid.uuid4().hex[:8]}",
         "agent_mode": "base",
+        "prompt_env": "🟢 Production",
         "langfuse_enabled": bool(
             os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY")
         ),
@@ -89,10 +99,21 @@ def _call_agent(user_input: str) -> tuple[str, float]:
 
     if mode == "instrumented":
         # ── Modo instrumentado: tracing completo con Langfuse ──────────────
-        # process_query() gestiona internamente el span raíz, los spans de
-        # herramientas y los atributos de sesión. No es necesario envolver
-        # con @observe aquí.
+        # Si hay selección de entorno, usa process_query_with_prompt para
+        # enlazar la versión del prompt con la traza.
         try:
+            prompt_label = ENVIRONMENTS.get(st.session_state.prompt_env, "production")
+            from techshop_agent.solution.prompt_provider import process_query_with_prompt
+
+            response = process_query_with_prompt(
+                user_input,
+                prompt_label=prompt_label,
+                user_id="streamlit-student",
+                session_id=st.session_state.session_id,
+                source="streamlit_app",
+            )
+        except ImportError:
+            # Fallback si prompt_provider no tiene process_query_with_prompt
             from techshop_agent.solution.observability import process_query
 
             response = process_query(
@@ -172,6 +193,39 @@ def main() -> None:
                 st.success("✅ Langfuse activo", icon="📊")
             else:
                 st.warning("⚠️ Langfuse no configurado\n\nDefine LANGFUSE_PUBLIC_KEY y LANGFUSE_SECRET_KEY en .env", icon="⚠️")
+
+            # ── Selector de entorno de prompt ───────────────────────────────
+            st.divider()
+            st.markdown("**Entorno de prompt**")
+            env_names = list(ENVIRONMENTS.keys())
+            current_idx = env_names.index(st.session_state.prompt_env) if st.session_state.prompt_env in env_names else 0
+            new_env = st.radio(
+                label="Selecciona entorno:",
+                options=env_names,
+                index=current_idx,
+                key="_env_radio",
+                label_visibility="collapsed",
+            )
+            if new_env != st.session_state.prompt_env:
+                st.session_state.prompt_env = new_env
+                st.session_state.messages = []
+                st.session_state.session_id = f"streamlit-{uuid.uuid4().hex[:8]}"
+                st.rerun()
+
+            label = ENVIRONMENTS[st.session_state.prompt_env]
+            st.caption(f"Label: `{label}`")
+
+            # Mostrar versión actual del prompt
+            if st.session_state.langfuse_enabled:
+                try:
+                    from techshop_agent.solution.prompt_provider import get_prompt_client
+                    pc = get_prompt_client(label=label, cache_ttl_seconds=0)
+                    if not pc.is_fallback:
+                        st.caption(f"Versión: **v{pc.version}**")
+                    else:
+                        st.caption("⚠️ Usando fallback local")
+                except Exception:
+                    st.caption("—")
         else:
             st.info("Sin tracing profundo.\nCambia a **Instrumentado** para ver trazas en Langfuse.", icon="ℹ️")
 
