@@ -51,7 +51,13 @@ from strands import tool as strands_tool
 from strands.models import BedrockModel
 
 from techshop_agent.config import SYSTEM_PROMPT
-from techshop_agent.tools import _get_faq_answer_impl, _search_catalog_impl
+from techshop_agent.tools import (
+    _check_stock_impl,
+    _compare_products_impl,
+    _get_faq_answer_impl,
+    _get_product_recommendations_impl,
+    _search_catalog_impl,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +177,125 @@ def observed_get_faq_answer(topic: str) -> str:
     return result
 
 
+@observe(name="tool_compare_products")
+def observed_compare_products(product_a: str, product_b: str) -> str:
+    """Product comparison with Langfuse tracing.
+
+    Demonstrates tracing a **multi-input** tool.  The metadata records both
+    product names and whether the comparison succeeded or hit an error
+    (product not found).  In Langfuse you can filter by ``comparison_valid``
+    to find queries where the customer asked for a non-existent product.
+
+    Tracing pattern shown: **multiple input parameters + error flag metadata**.
+
+    Args:
+        product_a: Name of the first product.
+        product_b: Name of the second product.
+
+    Returns:
+        JSON comparison or error object.
+    """
+    result = _compare_products_impl(product_a, product_b)
+
+    try:
+        parsed = json.loads(result)
+        is_valid = "error" not in parsed
+    except Exception:
+        is_valid = False
+
+    langfuse = get_langfuse_client()
+    langfuse.update_current_span(
+        metadata={
+            "product_a": product_a[:100],
+            "product_b": product_b[:100],
+            "comparison_valid": str(is_valid),
+        }
+    )
+    return result
+
+
+@observe(name="tool_check_stock")
+def observed_check_stock(product_name: str) -> str:
+    """Stock availability check with Langfuse tracing.
+
+    Demonstrates tracing a tool where the **business outcome is boolean-like**
+    (in stock / out of stock / not found).  The metadata captures the stock
+    level so you can correlate in Langfuse: *"which products are users asking
+    about when stock is low?"*
+
+    Tracing pattern shown: **categorical outcome + numeric metadata**.
+
+    Args:
+        product_name: Exact product name to check.
+
+    Returns:
+        JSON with availability and unit count, or error.
+    """
+    result = _check_stock_impl(product_name)
+
+    try:
+        parsed = json.loads(result)
+        found = "error" not in parsed
+        stock_level = str(parsed.get("unidades_disponibles", "N/A"))
+        in_stock = str(parsed.get("en_stock", "N/A"))
+    except Exception:
+        found = False
+        stock_level = "N/A"
+        in_stock = "N/A"
+
+    langfuse = get_langfuse_client()
+    langfuse.update_current_span(
+        metadata={
+            "product": product_name[:100],
+            "found": str(found),
+            "in_stock": in_stock,
+            "stock_level": stock_level,
+        }
+    )
+    return result
+
+
+@observe(name="tool_get_product_recommendations")
+def observed_get_product_recommendations(category: str, max_price: float) -> str:
+    """Budget-aware product recommendations with Langfuse tracing.
+
+    Demonstrates tracing a tool with **mixed parameter types** (string +
+    numeric) and **filter effectiveness metrics**.  The metadata records the
+    budget constraint alongside the result count, allowing you to answer in
+    Langfuse: *"are customers setting realistic budgets, or are most queries
+    returning zero results?"*
+
+    Tracing pattern shown: **numeric filter criteria + result-set statistics**.
+
+    Args:
+        category: Product category to filter by.
+        max_price: Maximum price in euros.
+
+    Returns:
+        JSON list of matching products sorted by price.
+    """
+    result = _get_product_recommendations_impl(category, max_price)
+
+    try:
+        products = json.loads(result)
+        n_results = len(products) if isinstance(products, list) else 0
+        cheapest = str(products[0]["precio"]) if n_results > 0 else "N/A"
+    except Exception:
+        n_results = 0
+        cheapest = "N/A"
+
+    langfuse = get_langfuse_client()
+    langfuse.update_current_span(
+        metadata={
+            "category": category[:100],
+            "max_price": str(max_price),
+            "results_count": str(n_results),
+            "cheapest_price": cheapest,
+        }
+    )
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Strands tool wrappers (module-level)
 # ---------------------------------------------------------------------------
@@ -213,6 +338,47 @@ def get_faq_answer(topic: str) -> str:
     return observed_get_faq_answer(topic)
 
 
+@strands_tool
+def compare_products(product_a: str, product_b: str) -> str:
+    """Compara dos productos del catálogo lado a lado.
+
+    Args:
+        product_a: Nombre exacto del primer producto.
+        product_b: Nombre exacto del segundo producto.
+
+    Returns:
+        Comparación con precios, categorías y diferencia de precio en JSON.
+    """
+    return observed_compare_products(product_a, product_b)
+
+
+@strands_tool
+def check_stock(product_name: str) -> str:
+    """Consulta la disponibilidad y stock de un producto específico.
+
+    Args:
+        product_name: Nombre exacto del producto a consultar.
+
+    Returns:
+        Disponibilidad y unidades en stock en formato JSON.
+    """
+    return observed_check_stock(product_name)
+
+
+@strands_tool
+def get_product_recommendations(category: str, max_price: float) -> str:
+    """Recomienda productos de una categoría dentro de un presupuesto.
+
+    Args:
+        category: Categoría de producto (ej: portatiles, smartphones, audio).
+        max_price: Precio máximo en euros.
+
+    Returns:
+        Productos que encajan, ordenados por precio ascendente, en JSON.
+    """
+    return observed_get_product_recommendations(category, max_price)
+
+
 # ---------------------------------------------------------------------------
 # Observed agent factory
 # ---------------------------------------------------------------------------
@@ -240,7 +406,13 @@ def create_observed_agent(system_prompt: str | None = None) -> Agent:
     return Agent(
         model=model,
         system_prompt=system_prompt or SYSTEM_PROMPT,
-        tools=[search_catalog, get_faq_answer],
+        tools=[
+            search_catalog,
+            get_faq_answer,
+            compare_products,
+            check_stock,
+            get_product_recommendations,
+        ],
     )
 
 
