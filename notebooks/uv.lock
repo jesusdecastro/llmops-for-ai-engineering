@@ -1543,6 +1543,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "strands-agents" },
     { name = "strands-agents-tools" },
+    { name = "techshop-agent" },
 ]
 
 [package.metadata]
@@ -1554,6 +1555,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "strands-agents", specifier = ">=0.1.0" },
     { name = "strands-agents-tools", specifier = ">=0.1.0" },
+    { name = "techshop-agent", directory = "../" },
 ]
 
 [[package]]
@@ -3222,6 +3224,43 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
+]
+
+[[package]]
+name = "techshop-agent"
+version = "0.1.0"
+source = { directory = "../" }
+dependencies = [
+    { name = "ipykernel" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "strands-agents" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ipykernel", specifier = ">=7.2.0" },
+    { name = "langfuse", marker = "extra == 'llmops'", specifier = ">=3.0.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "strands-agents", specifier = ">=0.1.0" },
+]
+provides-extras = ["llmops"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bandit", specifier = ">=1.7.0" },
+    { name = "boto3", specifier = ">=1.35.0" },
+    { name = "detect-secrets", specifier = ">=1.5.0" },
+    { name = "ipykernel", specifier = ">=6.0.0" },
+    { name = "jupyterlab", specifier = ">=4.5.6" },
+    { name = "langfuse", specifier = ">=3.0.0" },
+    { name = "notebook", specifier = ">=7.5.5" },
+    { name = "pre-commit", specifier = ">=3.0.0" },
+    { name = "pyright", specifier = ">=1.1.0" },
+    { name = "pytest", specifier = ">=7.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.21.0" },
+    { name = "ruff", specifier = ">=0.8.0" },
 ]
 
 [[package]]
