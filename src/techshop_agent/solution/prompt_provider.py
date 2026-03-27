@@ -271,6 +271,58 @@ def create_prompt_version(
 
 
 # ---------------------------------------------------------------------------
+# Online deterministic scoring
+# ---------------------------------------------------------------------------
+
+
+def _score_trace_online(
+    lf_client: object,
+    user_query: str,
+    response: str,
+) -> dict[str, float]:
+    """Run deterministic evaluators and attach scores to the current trace.
+
+    Only evaluators that work without ground-truth metadata are executed:
+    - response_quality: checks response length/emptiness
+    - scope_adherence: detects false rejections of legitimate queries
+
+    Scores are attached via ``score_current_trace()`` so they appear
+    linked to the trace in the Langfuse UI.
+
+    Returns:
+        Dict mapping score name to value (0.0–1.0).
+    """
+    from techshop_agent.evaluation.evaluators import (
+        response_quality_evaluator,
+        scope_adherence_evaluator,
+    )
+
+    eval_kwargs = {
+        "input": user_query,
+        "output": response,
+        "expected_output": None,
+        "metadata": {},
+    }
+
+    scores: dict[str, float] = {}
+    for evaluator in (response_quality_evaluator, scope_adherence_evaluator):
+        try:
+            evaluation = evaluator(**eval_kwargs)
+            if evaluation.value is not None:
+                scores[evaluation.name] = evaluation.value
+                lf_client.score_current_trace(
+                    name=evaluation.name,
+                    value=float(evaluation.value),
+                    data_type="NUMERIC",
+                    comment=evaluation.comment,
+                )
+        except Exception:
+            logger.debug("Online evaluator %s failed", evaluator.__name__, exc_info=True)
+
+    return scores
+
+
+# ---------------------------------------------------------------------------
 # Observed agent builder with prompt linking
 # ---------------------------------------------------------------------------
 
@@ -283,7 +335,7 @@ def process_query_with_prompt(
     user_id: str = "anonymous",
     session_id: str = "default",
     source: str = "api",
-) -> str:
+) -> tuple[str, dict[str, float]]:
     """Process a query using a versioned Langfuse prompt, linked to traces.
 
     This is the **most complete reference implementation**.  In addition to
@@ -313,7 +365,8 @@ def process_query_with_prompt(
         source: Request origin label.
 
     Returns:
-        Agent response text.
+        Tuple of (agent_response_text, scores_dict).
+        scores_dict maps evaluator name to score value (0.0–1.0).
     """
     lf_client = get_client()
 
@@ -350,4 +403,12 @@ def process_query_with_prompt(
                     "response_word_count": str(len(response_str.split())),
                 }
             )
-            return response_str
+
+            # ── Online deterministic scoring ────────────────────────────
+            # Run lightweight evaluators and attach scores to the trace.
+            # These are ~1ms each (pure string matching, no LLM calls).
+            scores = _score_trace_online(
+                lf_client, user_query, response_str,
+            )
+
+            return response_str, scores
