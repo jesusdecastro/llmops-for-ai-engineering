@@ -58,10 +58,10 @@ def promote_prompt(
     Returns:
         Dict with promotion details.
     """
-    langfuse = get_client()
+    lf_client = get_client()
 
     # Fetch the source prompt
-    source = langfuse.get_prompt(name, label=from_label, cache_ttl_seconds=0)
+    source = lf_client.get_prompt(name, label=from_label, cache_ttl_seconds=0)
     source_content = source.prompt
 
     if source.is_fallback:
@@ -79,7 +79,7 @@ def promote_prompt(
     )
 
     # Create new version with the target label
-    langfuse.create_prompt(
+    lf_client.create_prompt(
         name=name,
         prompt=source_content,
         labels=[to_label, "latest"],
@@ -90,7 +90,7 @@ def promote_prompt(
             "source": "promote-script",
         },
     )
-    langfuse.flush()
+    lf_client.flush()
 
     return {
         "name": name,

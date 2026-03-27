@@ -1,7 +1,11 @@
-"""Deterministic evaluators and run-level aggregators.
+"""Evaluadores deterministas y agregadores run-level.
 
-Each evaluator follows the Langfuse evaluator signature:
+Cada evaluador sigue la firma que espera Langfuse run_experiment():
   def evaluator(*, input, output, expected_output, metadata, **kwargs) -> Evaluation
+
+Los evaluadores item-level reciben la respuesta del agente y devuelven un
+Evaluation con score 0.0-1.0. Los agregadores run-level reciben todos los
+resultados del experimento y calculan métricas globales (medias).
 """
 
 from __future__ import annotations
@@ -9,31 +13,105 @@ from __future__ import annotations
 from langfuse import Evaluation
 
 
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║  CONFIGURACIÓN TUNABLE — Modifica estas listas para mejorar detección   ║
+# ║                                                                         ║
+# ║  Estas constantes separan los DATOS de la LÓGICA.                       ║
+# ║  Los evaluadores de abajo las consumen; tú solo necesitas editar aquí.  ║
+# ║                                                                         ║
+# ║  EJERCICIO: Ejecuta la evaluación, revisa los falsos positivos/         ║
+# ║  negativos en los resultados, y ajusta estas listas iterativamente.     ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+# -- Scope adherence (F3) --------------------------------------------------
+# Frases que indican que el agente RECHAZÓ una consulta fuera de ámbito.
+# Si el agente usa una frase diferente para rechazar, añádela aquí.
+#
+# CUIDADO: No añadir palabras genéricas como "techshop" que aparecen en
+# respuestas normales — solo frases que impliquen RECHAZO explícito.
+OOS_REJECTION_PHRASES: list[str] = [
+    "no puedo",
+    "solo puedo",
+    "fuera de",
+    "no estoy",
+    # >>> AÑADE más frases de rechazo que descubras en los resultados <<<
+]
+
+# Frases que indican rechazo INDEBIDO de una consulta legítima.
+# Si el agente rechaza preguntas sobre productos/FAQs, añade la frase aquí.
+IN_SCOPE_FALSE_REJECTION_PHRASES: list[str] = [
+    "no puedo ayudar",
+    "solo puedo ayudarte con consultas",
+    "fuera de mi ámbito",
+    # >>> AÑADE más si el agente rechaza queries legítimas de producto/FAQ <<<
+]
+
+
+# -- Tool usage (F4) -------------------------------------------------------
+# Indicadores de que search_catalog fue llamado y devolvió datos reales.
+# Si el agente muestra datos de catálogo con otro formato, añade el indicador.
+CATALOG_EVIDENCE_KEYWORDS: list[str] = [
+    "€", "eur", "precio", "stock", "disponib", "catálogo",
+    # >>> AÑADE más indicadores de datos de catálogo si el formato cambia <<<
+]
+
+# Indicadores de que get_faq_answer fue llamado y devolvió datos reales.
+# Si las FAQs del agente usan otro vocabulario, amplía esta lista.
+FAQ_EVIDENCE_KEYWORDS: list[str] = [
+    "días", "horas", "hábiles", "garantía", "reembolso",
+    "envío", "devoluc", "pago", "horario", "soporte",
+    "lunes", "viernes", "tarjeta", "política",
+    # >>> AÑADE más indicadores de datos de FAQ si el vocabulario cambia <<<
+]
+
+# Frase genérica que indica que el tool se llamó pero no encontró resultados.
+TOOL_NO_RESULTS_PHRASES: list[str] = [
+    "no encontr",
+    "no he encontrado",
+    # >>> AÑADE más variantes de "no encontré nada" <<<
+]
+
+
+# -- Response quality -------------------------------------------------------
+# Umbrales de longitud para la calidad de respuesta.
+MIN_RESPONSE_LENGTH: int = 10       # chars — por debajo → score 0.0
+MAX_RESPONSE_WORDS: int = 500       # words — por encima → score 0.5
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║  LÓGICA DE EVALUADORES — Lee, entiende, pero no necesitas tocar aquí.   ║
+# ║  La lógica consume las constantes de arriba.                            ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+
+
 def scope_adherence_evaluator(
     *, input: str, output: str, expected_output: str | None, metadata: dict | None, **kwargs
 ) -> Evaluation:
-    """Check if out-of-scope queries are properly rejected.
+    """Detecta el fallo F3 (scope creep): ¿el agente respeta sus límites?
 
-    Returns 1.0 if the agent correctly rejects out-of-scope queries,
-    or correctly answers in-scope queries. Returns 0.0 otherwise.
+    Lógica:
+    - Si metadata.category == "out_of_scope" → el agente DEBE rechazar.
+      Busca frases de rechazo en OOS_REJECTION_PHRASES. Si las
+      encuentra → 1.0, si no → 0.0 (el agente contestó algo que no debía).
+    - Si la categoría es otra (product, faq) → el agente NO debe rechazar.
+      Si rechaza una consulta legítima → 0.0.
+
+    Es determinista: solo busca palabras clave, no llama a ningún LLM.
     """
     meta = metadata or {}
     category = meta.get("category", "")
     output_lower = output.lower() if output else ""
 
     if category == "out_of_scope":
-        # Agent should reject — look for rejection indicators
-        rejection_phrases = ["no puedo", "solo puedo", "techshop", "fuera de", "no estoy"]
-        is_rejected = any(phrase in output_lower for phrase in rejection_phrases)
+        is_rejected = any(phrase in output_lower for phrase in OOS_REJECTION_PHRASES)
         return Evaluation(
             name="scope_adherence",
             value=1.0 if is_rejected else 0.0,
             comment="Correctly rejected" if is_rejected else "Failed to reject out-of-scope query",
         )
     else:
-        # In-scope query — agent should NOT reject
-        rejection_phrases = ["no puedo ayudar", "fuera de mi ámbito"]
-        is_rejected = any(phrase in output_lower for phrase in rejection_phrases)
+        is_rejected = any(phrase in output_lower for phrase in IN_SCOPE_FALSE_REJECTION_PHRASES)
         return Evaluation(
             name="scope_adherence",
             value=0.0 if is_rejected else 1.0,
@@ -44,11 +122,21 @@ def scope_adherence_evaluator(
 def hallucination_evaluator(
     *, input: str, output: str, expected_output: str | None, metadata: dict | None, **kwargs
 ) -> Evaluation:
-    """Check if the response contains known hallucinated content.
+    """Detecta los fallos F1 (alucinación) y F2 (extrapolación FAQ).
 
-    Uses the should_not_contain list from metadata to detect specific
-    hallucination patterns (e.g., products not in catalog), and the
-    should_contain list to verify that required facts are present.
+    Usa dos listas del metadata de cada caso del dataset:
+    - should_not_contain: palabras que NO deben aparecer en la respuesta.
+      Ejemplo: ["iPhone", "Apple"] → si el agente menciona iPhone, está
+      inventando un producto que no existe en el catálogo (F1).
+    - should_contain: palabras que SÍ deben aparecer.
+      Ejemplo: ["30"] → si el agente habla de la política de devolución
+      pero no menciona "30" días, probablemente inventó otra cifra (F2).
+
+    NOTA: Las listas should_not_contain / should_contain se definen POR CASO
+    en dataset.py, no aquí. Para mejorar la detección de F1/F2, edita el
+    metadata de cada caso en EVAL_DATASET.
+
+    Es determinista: solo busca palabras clave, no llama a ningún LLM.
     """
     meta = metadata or {}
     should_not_contain = meta.get("should_not_contain", [])
@@ -83,17 +171,24 @@ def hallucination_evaluator(
 def response_quality_evaluator(
     *, input: str, output: str, expected_output: str | None, metadata: dict | None, **kwargs
 ) -> Evaluation:
-    """Basic response quality: not empty, reasonable length, in Spanish."""
-    if not output or len(output.strip()) < 10:
+    """Verificación básica de calidad: ¿la respuesta es razonable?
+
+    Comprueba dos cosas simples:
+    - Que la respuesta no esté vacía ni sea demasiado corta (< MIN_RESPONSE_LENGTH).
+    - Que no sea excesivamente larga (> MAX_RESPONSE_WORDS → 0.5).
+
+    No detecta ningún fallo F1–F4 en particular; es una red de seguridad
+    para respuestas degeneradas (vacías, truncadas o incontrolablemente largas).
+    """
+    if not output or len(output.strip()) < MIN_RESPONSE_LENGTH:
         return Evaluation(
             name="response_quality",
             value=0.0,
             comment="Response is empty or too short",
         )
 
-    # Reasonable length (not excessively long)
     word_count = len(output.split())
-    if word_count > 500:
+    if word_count > MAX_RESPONSE_WORDS:
         return Evaluation(
             name="response_quality",
             value=0.5,
@@ -107,46 +202,35 @@ def response_quality_evaluator(
     )
 
 
-# ---------------------------------------------------------------------------
-# Tool usage evaluator (F4 detection)
-# ---------------------------------------------------------------------------
-# The dataset specifies which tool the agent SHOULD call for each query.
-# This evaluator checks if the agent output is consistent with having used
-# the expected tool. Since we don't have direct access to trace spans in
-# the evaluator function, we use a heuristic: if a query requires
-# search_catalog but the response looks generic (no product names/prices),
-# the tool was likely skipped.
-#
-# In production, you would verify tool calls via Langfuse trace spans.
-# This heuristic approach is appropriate for an offline evaluation suite.
-
-
 def tool_usage_evaluator(
     *, input: str, output: str, expected_output: str | None, metadata: dict | None, **kwargs
 ) -> Evaluation:
-    """Check if the response is consistent with the expected tool being used.
+    """Detecta el fallo F4 (omisión de herramienta): ¿el agente usó su tool?
 
-    Returns 1.0 if the response shows evidence of tool usage (product details,
-    policy specifics) when a tool was expected. Returns 0.0 if a tool was
-    expected but the response is generic or empty.
+    Cada caso del dataset puede indicar metadata.expected_tool (por ejemplo,
+    "search_catalog" o "get_faq_answer"). Si el agente debía llamar a una
+    herramienta pero respondió de memoria, la respuesta será genérica y no
+    contendrá datos concretos (precios, plazos, stock...).
+
+    Heurística: busca indicadores en CATALOG_EVIDENCE_KEYWORDS o
+    FAQ_EVIDENCE_KEYWORDS según la herramienta esperada.
+
+    Limitación: es una heurística basada en la respuesta, no inspecciona
+    los spans de la traza. En producción se verificaría directamente
+    en los spans de Langfuse.
     """
     meta = metadata or {}
     expected_tool = meta.get("expected_tool")
     output_lower = output.lower() if output else ""
 
     if expected_tool is None:
-        # No tool expected — pass unconditionally
         return Evaluation(name="tool_usage", value=1.0, comment="No tool expected")
 
+    # Check for "no results" phrases (valid for both tools)
+    no_results = any(phrase in output_lower for phrase in TOOL_NO_RESULTS_PHRASES)
+
     if expected_tool == "search_catalog":
-        # Evidence of catalog usage: product names, prices (€), stock info
-        has_evidence = any(
-            indicator in output_lower
-            for indicator in ["€", "eur", "precio", "stock", "disponib", "catálogo"]
-        ) or any(char.isdigit() and output_lower[max(0, i - 3) : i + 3].count("€") > 0
-               for i, char in enumerate(output_lower))
-        # Also accept "no encontr" as evidence the tool was called and returned nothing
-        has_evidence = has_evidence or "no encontr" in output_lower or "no he encontrado" in output_lower
+        has_evidence = any(kw in output_lower for kw in CATALOG_EVIDENCE_KEYWORDS) or no_results
         return Evaluation(
             name="tool_usage",
             value=1.0 if has_evidence else 0.0,
@@ -154,16 +238,7 @@ def tool_usage_evaluator(
         )
 
     if expected_tool == "get_faq_answer":
-        # Evidence of FAQ usage: policy-specific language
-        has_evidence = any(
-            indicator in output_lower
-            for indicator in [
-                "días", "horas", "hábiles", "garantía", "reembolso",
-                "envío", "devoluc", "pago", "horario", "soporte",
-                "lunes", "viernes", "tarjeta", "política",
-            ]
-        )
-        has_evidence = has_evidence or "no encontr" in output_lower or "no he encontrado" in output_lower
+        has_evidence = any(kw in output_lower for kw in FAQ_EVIDENCE_KEYWORDS) or no_results
         return Evaluation(
             name="tool_usage",
             value=1.0 if has_evidence else 0.0,
@@ -184,7 +259,7 @@ def tool_usage_evaluator(
 
 
 def average_score_evaluator(*, item_results, **kwargs) -> Evaluation:
-    """Calculate average across all scope_adherence scores."""
+    """Agregador run-level: media de scope_adherence sobre todos los casos."""
     scores = [
         ev.value
         for result in item_results
@@ -202,7 +277,7 @@ def average_score_evaluator(*, item_results, **kwargs) -> Evaluation:
 
 
 def average_hallucination_evaluator(*, item_results, **kwargs) -> Evaluation:
-    """Calculate average hallucination check score."""
+    """Agregador run-level: media de hallucination_check sobre todos los casos."""
     scores = [
         ev.value
         for result in item_results
@@ -220,7 +295,7 @@ def average_hallucination_evaluator(*, item_results, **kwargs) -> Evaluation:
 
 
 def average_faithfulness_evaluator(*, item_results, **kwargs) -> Evaluation:
-    """Calculate average faithfulness (LLM-as-judge) score."""
+    """Agregador run-level: media de faithfulness (LLM-as-Judge) sobre todos los casos."""
     scores = [
         ev.value
         for result in item_results
@@ -238,7 +313,7 @@ def average_faithfulness_evaluator(*, item_results, **kwargs) -> Evaluation:
 
 
 def average_tool_usage_evaluator(*, item_results, **kwargs) -> Evaluation:
-    """Calculate average tool_usage score."""
+    """Agregador run-level: media de tool_usage sobre todos los casos."""
     scores = [
         ev.value
         for result in item_results

@@ -103,8 +103,6 @@ class EvalResult:
 
 
 @observe(name="prompt_evaluation")
-
-
 def run_evaluation(
     *,
     label: str = "staging",
@@ -141,15 +139,31 @@ def run_evaluation(
 
     agent = create_agent(system_prompt=system_prompt)
 
+    print(f"▶ Running {len(eval_data)} dataset items against label '{label}'…\n")
+
     # Define task function for Langfuse experiment runner
+    task_counter = {"n": 0}
+
     def agent_task(*, item, **kwargs):
+        task_counter["n"] += 1
         query = item["input"] if isinstance(item, dict) else item.input
-        return str(agent(query))
+        meta = item.get("metadata", {}) if isinstance(item, dict) else (item.metadata or {})
+        item_id = meta.get("id", f"item_{task_counter['n']}")
+        failure_mode = meta.get("failure_mode", "?")
+
+        print(f"  [{task_counter['n']}/{len(eval_data)}] {item_id} ({failure_mode})")
+        print(f"    Input:  {query[:90]}{'…' if len(query) > 90 else ''}")
+
+        output = str(agent(query))
+
+        print(f"    Output: {output[:120]}{'…' if len(output) > 120 else ''}")
+        print()
+        return output
 
     # Run with Langfuse experiment runner
-    langfuse = get_client()
+    lf_client = get_client()
 
-    result = langfuse.run_experiment(
+    result = lf_client.run_experiment(
         name=f"techshop-eval-{label}",
         description=f"Evaluation of prompt label '{label}'",
         data=eval_data,
@@ -208,7 +222,7 @@ def run_evaluation(
         if all_passed:
             eval_result.passed_cases += 1
 
-    langfuse.flush()
+    lf_client.flush()
     return eval_result
 
 

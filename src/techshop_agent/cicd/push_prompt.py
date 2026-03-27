@@ -60,16 +60,16 @@ def push_prompt(
     Returns:
         Dict with version info: name, labels, content_length.
     """
-    langfuse = get_client()
+    lf_client = get_client()
 
-    langfuse.create_prompt(
+    lf_client.create_prompt(
         name=name,
         prompt=content,
         labels=labels,
         type="text",
         config=config or {},
     )
-    langfuse.flush()
+    lf_client.flush()
 
     logger.info("Created prompt '%s' with labels %s", name, labels)
     return {

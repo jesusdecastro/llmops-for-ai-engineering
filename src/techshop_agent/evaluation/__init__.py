@@ -2,6 +2,12 @@
 
 Re-exports all public names so existing imports continue to work:
   from techshop_agent.evaluation import EVAL_DATASET, run_evaluation, ...
+
+Archivos del paquete:
+  dataset.py    — Casos de evaluación (TUNABLE: añade/edita casos)
+  evaluators.py — Evaluadores deterministas (TUNABLE: listas de keywords arriba)
+  judge.py      — LLM-as-Judge faithfulness (TUNABLE: rúbrica de scoring)
+  runner.py     — Orquestador que conecta todo con Langfuse run_experiment()
 """
 
 from .dataset import EVAL_DATASET

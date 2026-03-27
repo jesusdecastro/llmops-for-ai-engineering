@@ -5,12 +5,28 @@ Structure follows Langfuse dataset item schema:
   input  -- the user query
   expected_output -- ground truth or expected behavior description
   metadata -- additional info for evaluators (category, expected_tool, failure_mode)
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  CÓMO MEJORAR ESTE DATASET                                              ║
+║                                                                         ║
+║  1. Ejecuta la evaluación:  python -m techshop_agent.evaluation         ║
+║  2. Revisa los resultados: ¿hay falsos positivos o negativos?           ║
+║  3. Para cada fallo, pregúntate:                                        ║
+║     - ¿El caso tiene should_not_contain / should_contain adecuados?     ║
+║     - ¿Falta una keyword que el agente usa al alucinar?                 ║
+║     - ¿El expected_tool es correcto?                                    ║
+║  4. Añade nuevos casos para cubrir patrones que se te escapan.          ║
+║  5. Regla de oro: al menos 3 casos por cada failure mode (F1-F4).       ║
+╚═══════════════════════════════════════════════════════════════════════════╝
 """
 
 from __future__ import annotations
 
+
 EVAL_DATASET: list[dict] = [
     # ── F1: Hallucination — agent invents products ─────────────────────────
+    # NOTA: should_not_contain lista marcas/productos que NO están en el catálogo.
+    # Si tu agente alucina con otras marcas, añádelas aquí.
     {
         "input": "¿Tenéis el iPhone 15 Pro Max?",
         "expected_output": "No deberías recomendar productos que no estén en el catálogo",
@@ -44,6 +60,8 @@ EVAL_DATASET: list[dict] = [
         },
     },
     # ── F2: FAQ edge case — invents policy exceptions ──────────────────────
+    # NOTA: should_contain verifica datos reales de FAQ ("30" días, "12" meses...).
+    # Si la FAQ cambia, actualiza estas cifras. Revisa faqs.json.
     {
         "input": "¿Puedo devolver un producto después de 45 días?",
         "expected_output": "Política de 30 días, sin excepciones inventadas",
@@ -77,6 +95,9 @@ EVAL_DATASET: list[dict] = [
         },
     },
     # ── F3: Scope creep — answers out-of-scope questions ───────────────────
+    # NOTA: should_contain_any es informativo pero no lo usa el evaluador.
+    # La detección real está en OOS_REJECTION_PHRASES de evaluators.py.
+    # Si quieres más cobertura OOS, añade más queries aquí.
     {
         "input": "¿Cuál es la mejor receta de tarta de chocolate?",
         "expected_output": "Debe rechazar la pregunta por estar fuera de ámbito",
@@ -122,6 +143,10 @@ EVAL_DATASET: list[dict] = [
         },
     },
     # ── F4: Tool skip — doesn't use tools, hallucinates data ──────────────
+    # NOTA: expected_tool indica qué herramienta debería llamar el agente.
+    # La detección usa CATALOG_EVIDENCE_KEYWORDS / FAQ_EVIDENCE_KEYWORDS
+    # en evaluators.py. Si el agente da datos correctos sin tool, el
+    # evaluador heurístico puede dar falso positivo — el LLM judge lo cubre.
     {
         "input": "¿Cuánto cuesta el ProBook X1?",
         "expected_output": "Debe usar search_catalog para devolver el precio real",
@@ -143,6 +168,8 @@ EVAL_DATASET: list[dict] = [
         },
     },
     # ── Happy path: valid queries that should work correctly ───────────────
+    # Estos son los casos "debería funcionar". Si fallan, algo se rompió.
+    # >>> EJERCICIO: Añade más happy paths para cubrir más productos/FAQs <<<
     {
         "input": "¿Qué auriculares tenéis?",
         "expected_output": "Lista de auriculares del catálogo",

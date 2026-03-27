@@ -1,14 +1,14 @@
-# M5 — CI/CD para Prompts: Deploy sin Tocar Código
+# M5 — CI/CD para Prompts: Despliegue sin Tocar Código
 ## Día 2 · Bloque 2 · 12:00 – 13:30
 
-> **Prompt para Gamma.app:** Crea una presentación educativa sobre CI/CD para prompts de agentes LLM. Estilo profesional, fondos oscuros. Audiencia: ingenieros junior que conocen CI/CD de código pero nunca han deployado prompts. Cubre: por qué el prompt necesita su propio pipeline, el flujo push→evaluate→promote, scripts Python descriptivos, configuración para GitHub Actions y GitLab CI, Streamlit con pestañas por entorno, y labels como punteros a versiones. Incluye YAMLs reales y código Python real.
+> **Prompt para Gamma.app:** Crea una presentación educativa sobre CI/CD para prompts de agentes LLM. Estilo profesional, fondos oscuros. Audiencia: ingenieros junior que conocen CI/CD de código pero nunca han desplegado prompts. Cubre: por qué el prompt necesita su propio pipeline, el flujo push→evaluate→promote, scripts Python descriptivos, configuración para GitHub Actions y GitLab CI, Streamlit con pestañas por entorno, y labels como punteros a versiones. Incluye YAMLs reales y código Python real.
 
 ---
 
 ## Slide 1: Portada
 
 **CI/CD para Prompts**
-Automatizar el deploy de prompts como artefactos de primera clase
+Automatizar el despliegue de prompts como artefactos de primera clase
 
 ---
 
@@ -16,17 +16,17 @@ Automatizar el deploy de prompts como artefactos de primera clase
 
 | Aspecto | Código (Git) | Prompt (Langfuse) |
 |---------|:-----------:|:-----------------:|
-| **Frecuencia de cambio** | Semanal | Diaria |
+| **Frecuencia de cambio** | Semanal | Potencialmente más frecuente |
 | **Quién lo cambia** | Desarrolladores | Devs + Product + Lingüistas |
-| **Deploy** | Build + Restart (minutos) | Mover label (segundos) |
-| **Rollback** | git revert + redeploy | Mover label atrás |
-| **Test** | pytest (determinista) | Evaluación semántica |
+| **Despliegue** | Build + Restart (minutos) | Pipeline push→evaluate→promote |
+| **Rollback** | git revert + redespliegue | Revertir label (tras CI/CD o manual en UI) |
+| **Test** | pytest (determinista) | Evaluación semántica + determinista |
 | **Versionado** | Git commits | Langfuse versions |
 | **Entornos** | Git branches | Langfuse labels |
 
 **El prompt no es una configuración** — es el artefacto que controla el comportamiento del LLM. Merece su propio pipeline.
 
-> En DevOps, el mantra es "treat infrastructure as code". En LLMOps, el mantra es **"treat prompts as deployable artifacts"**.
+> En DevOps, el principio es tratar la infraestructura como código. En LLMOps, el equivalente es **tratar los prompts como artefactos desplegables** con versionado, evaluación y promoción controlada.
 
 ---
 
@@ -214,7 +214,7 @@ for tab, (env_name, label) in zip(tabs, ENVIRONMENTS.items()):
             st.write(str(agent(query)))
 ```
 
-**El CD es dinámico:** Cuando el pipeline mueve el label `production`, la pestaña "Production" de Streamlit devuelve automáticamente la nueva versión en la siguiente request.
+Cuando el pipeline promueve un prompt a `production`, la pestaña "Production" de Streamlit devuelve la nueva versión en la siguiente petición, porque consulta el label por API.
 
 ---
 

@@ -147,7 +147,7 @@ def get_system_prompt(
         The compiled prompt text, ready to pass as ``system_prompt`` to
         ``create_agent()``.
     """
-    langfuse = get_client()
+    lf_client = get_client()
 
     try:
         # get_prompt() returns a TextPromptClient with:
@@ -159,7 +159,7 @@ def get_system_prompt(
         # For the fallback parameter we pass FALLBACK_PROMPT as a string.
         # Langfuse will use this if no cached or fresh prompt is available.
         # Reference: https://langfuse.com/docs/prompt-management/features/guaranteed-availability
-        prompt_client = langfuse.get_prompt(
+        prompt_client = lf_client.get_prompt(
             PROMPT_NAME,
             label=label,
             fallback=FALLBACK_PROMPT,
@@ -206,7 +206,7 @@ def get_prompt_client(
     Unlike ``get_system_prompt()``, this returns the full ``TextPromptClient``
     object rather than just the compiled string.  You need the client object
     to link the prompt to Langfuse traces via
-    ``langfuse.update_current_generation(prompt=prompt_client)``.
+    ``lf_client.update_current_generation(prompt=prompt_client)``.
 
     Linking prompts to traces unlocks per-version metrics in the Langfuse UI:
     latency, token cost, and evaluation scores — broken down by prompt version.
@@ -220,8 +220,8 @@ def get_prompt_client(
     Returns:
         The ``TextPromptClient`` object from the Langfuse SDK.
     """
-    langfuse = get_client()
-    return langfuse.get_prompt(
+    lf_client = get_client()
+    return lf_client.get_prompt(
         PROMPT_NAME,
         label=label,
         fallback=FALLBACK_PROMPT,
@@ -259,8 +259,8 @@ def create_prompt_version(
             Stored in Langfuse and visible in the UI.
             Reference: https://langfuse.com/docs/prompt-management/features/config
     """
-    langfuse = get_client()
-    langfuse.create_prompt(
+    lf_client = get_client()
+    lf_client.create_prompt(
         name=PROMPT_NAME,
         prompt=content,
         labels=labels,
@@ -315,7 +315,7 @@ def process_query_with_prompt(
     Returns:
         Agent response text.
     """
-    langfuse = get_client()
+    lf_client = get_client()
 
     # Fetch the prompt client object (not just the text) so we can link it.
     # cache_ttl_seconds=60 means the prompt is refreshed from Langfuse at
@@ -344,7 +344,7 @@ def process_query_with_prompt(
             logger.exception("Agent processing failed for query: %r", user_query)
             raise
         else:
-            langfuse.update_current_span(
+            lf_client.update_current_span(
                 metadata={
                     "response_length": str(len(response_str)),
                     "response_word_count": str(len(response_str.split())),

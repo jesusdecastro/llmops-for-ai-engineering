@@ -10,6 +10,21 @@ Trade-offs:
   - Non-deterministic (same input may produce different scores)
   - Adds latency and cost (one extra LLM call per item)
 
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  CÓMO MEJORAR ESTE EVALUADOR                                            ║
+║                                                                         ║
+║  1. RÚBRICA: Modifica _JUDGE_PROMPT abajo. Los niveles de scoring       ║
+║     (1.0, 0.7, 0.5, 0.3, 0.0) determinan la granularidad.              ║
+║     Si ves muchos 0.3 que deberían ser 0.5, refina las descripciones.   ║
+║                                                                         ║
+║  2. MODELO: Cambia JUDGE_MODEL_ID en .env para usar un modelo más       ║
+║     potente o más económico. Haiku es rápido y barato; Sonnet es más    ║
+║     preciso. El trade-off es costo vs calidad del juicio.               ║
+║                                                                         ║
+║  3. GROUND TRUTH: El judge recibe catálogo y FAQs completos.            ║
+║     Si cambias data/catalog.json o data/faqs.json, el judge se adapta.  ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
 Reference: https://langfuse.com/docs/evaluation/evaluation-methods/llm-as-a-judge
 """
 
@@ -42,6 +57,13 @@ logger = logging.getLogger(__name__)
 #
 # Reference: https://langfuse.com/docs/evaluation/evaluation-methods/llm-as-a-judge
 
+# ── RÚBRICA DEL JUDGE ─────────────────────────────────────────────────────
+# Este prompt define CÓMO evalúa el LLM judge. Los niveles de scoring (1.0,
+# 0.7, 0.5, 0.3, 0.0) son el parámetro clave que puedes ajustar.
+# Si el judge es demasiado estricto o permisivo, edita las descripciones.
+#
+# EJERCICIO: Ejecuta la evaluación, revisa los scores de faithfulness,
+# y ajusta la rúbrica para que coincida con tu criterio humano.
 _JUDGE_PROMPT = """\
 You are an evaluation judge for a customer service chatbot called "TechShop Agent".
 The agent MUST ONLY answer questions about TechShop products and policies.
@@ -61,12 +83,16 @@ score the response on **faithfulness** (did the agent stick to facts?) on a
 scale of 0.0 to 1.0.
 
 ## Scoring rubric
-- **1.0** — Response is fully grounded: only uses catalog/FAQ data, or correctly
-  declines when information is unavailable. No fabrication.
-- **0.7** — Mostly grounded but contains minor embellishment (e.g., slightly
-  rephrased facts that don't change meaning).
-- **0.3** — Contains plausible-sounding but unverifiable claims (e.g., invented
-  warranty extensions, made-up delivery times).
+- **1.0** — Fully grounded: only uses catalog/FAQ data, or correctly declines
+  when information is unavailable. Minor rephrasing is fine.
+- **0.7** — Mostly grounded but adds small inferences from real data (e.g.,
+  suggesting a real product fits a use case based on its specs). All mentioned
+  products, prices, and policies are real.
+- **0.5** — Mixed: core facts are real but the response adds subjective claims
+  not supported by the data (e.g., "best for gaming" when specs don't say that),
+  or fails to find a product that exists in the catalog.
+- **0.3** — Contains plausible-sounding but unverifiable claims: invented policy
+  exceptions, made-up delivery times, or recommends products not in the catalog.
 - **0.0** — Clear fabrication: invents products, prices, policies, or answers
   questions completely outside TechShop scope.
 

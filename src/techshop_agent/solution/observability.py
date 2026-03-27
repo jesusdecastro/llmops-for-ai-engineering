@@ -92,7 +92,7 @@ def get_langfuse_client() -> Langfuse:
     """
     global _langfuse  # noqa: PLW0603
     if _langfuse is None:
-        _langfuse = get_client()
+        _lf_client = get_client()
     return _langfuse
 
 
@@ -141,8 +141,8 @@ def observed_search_catalog(query: str) -> str:
     except Exception:
         n_results = 0
 
-    langfuse = get_langfuse_client()
-    langfuse.update_current_span(
+    lf_client = get_langfuse_client()
+    lf_client.update_current_span(
         metadata={
             "results_count": str(n_results),
             "query": query[:100],
@@ -167,8 +167,8 @@ def observed_get_faq_answer(topic: str) -> str:
     """
     result = _get_faq_answer_impl(topic)
 
-    langfuse = get_langfuse_client()
-    langfuse.update_current_span(
+    lf_client = get_langfuse_client()
+    lf_client.update_current_span(
         metadata={
             "matched": str(result != "None"),
             "topic": topic[:100],
@@ -203,8 +203,8 @@ def observed_compare_products(product_a: str, product_b: str) -> str:
     except Exception:
         is_valid = False
 
-    langfuse = get_langfuse_client()
-    langfuse.update_current_span(
+    lf_client = get_langfuse_client()
+    lf_client.update_current_span(
         metadata={
             "product_a": product_a[:100],
             "product_b": product_b[:100],
@@ -243,8 +243,8 @@ def observed_check_stock(product_name: str) -> str:
         stock_level = "N/A"
         in_stock = "N/A"
 
-    langfuse = get_langfuse_client()
-    langfuse.update_current_span(
+    lf_client = get_langfuse_client()
+    lf_client.update_current_span(
         metadata={
             "product": product_name[:100],
             "found": str(found),
@@ -284,8 +284,8 @@ def observed_get_product_recommendations(category: str, max_price: float) -> str
         n_results = 0
         cheapest = "N/A"
 
-    langfuse = get_langfuse_client()
-    langfuse.update_current_span(
+    lf_client = get_langfuse_client()
+    lf_client.update_current_span(
         metadata={
             "category": category[:100],
             "max_price": str(max_price),
@@ -448,7 +448,7 @@ def process_query(
        Call it **early** so every child span inherits the attributes.
        Reference: https://langfuse.com/docs/observability/sdk/instrumentation#add-attributes
 
-    3. ``langfuse.update_current_span(metadata={...})``
+    3. ``lf_client.update_current_span(metadata={...})``
        Enriches the current observation **after** we have the response,
        adding computed metadata like response length and word count.
        Reference: https://langfuse.com/docs/observability/sdk/instrumentation#update-observations
@@ -469,7 +469,7 @@ def process_query(
     Returns:
         The agent's response as a plain string.
     """
-    langfuse = get_langfuse_client()
+    lf_client = get_langfuse_client()
 
     # Create the agent with observed tool wrappers.
     # If you need to share a single agent instance across calls, cache it
@@ -496,7 +496,7 @@ def process_query(
         else:
             # Enrich the root span with response metadata.
             # We do this in the else block so it only runs on success.
-            langfuse.update_current_span(
+            lf_client.update_current_span(
                 metadata={
                     "response_length": str(len(response_str)),
                     "response_word_count": str(len(response_str.split())),

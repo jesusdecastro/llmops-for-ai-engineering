@@ -8,7 +8,7 @@
 ## Slide 1: Portada
 
 **Evaluación y Testing de Agentes LLM**
-Medir antes de deployar — el quality gate que falta en tu pipeline
+Medir antes de desplegar — el quality gate que falta en tu pipeline
 
 ---
 
@@ -30,9 +30,9 @@ print(response)
 # ❌ TechShop NO vende MacBooks. El agente INVENTÓ el producto.
 ```
 
-**El problema:** Probar 3-4 queries en un notebook NO es evaluación. Es cherry-picking. Un agente tiene miles de posibles inputs, y los fallos aparecen en los que no probaste.
+**El problema:** Probar 3-4 queries en un notebook NO es evaluación. Es selección favorable. Un agente tiene miles de posibles inputs, y los fallos aparecen en los que no probaste.
 
-> **Dato real:** Según un estudio de Galileo (2024), el 23% de las respuestas de agentes LLM en producción contienen algún tipo de alucinación que no fue detectada en testing manual.
+> Los fallos de agentes LLM en producción (alucinaciones, scope creep, tool skipping) suelen aparecer en queries que nadie probó manualmente. Por eso necesitamos evaluación sistemática.
 
 ---
 
@@ -156,9 +156,9 @@ def scope_adherence_evaluator(
 ```python
 from langfuse import get_client
 
-langfuse = get_client()
+lf_client = get_client()
 
-result = langfuse.run_experiment(
+result = lf_client.run_experiment(
     name="eval-staging-v2",
     data=EVAL_DATASET,                    # Nuestro dataset
     task=agent_task,                      # Función que ejecuta el agente
