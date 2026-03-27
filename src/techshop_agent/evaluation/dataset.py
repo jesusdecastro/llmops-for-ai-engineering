@@ -7,16 +7,16 @@ Structure follows Langfuse dataset item schema:
   metadata -- additional info for evaluators (category, expected_tool, failure_mode)
 
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║  CÓMO MEJORAR ESTE DATASET                                              ║
-║                                                                         ║
-║  1. Ejecuta la evaluación:  python -m techshop_agent.evaluation         ║
-║  2. Revisa los resultados: ¿hay falsos positivos o negativos?           ║
-║  3. Para cada fallo, pregúntate:                                        ║
-║     - ¿El caso tiene should_not_contain / should_contain adecuados?     ║
-║     - ¿Falta una keyword que el agente usa al alucinar?                 ║
-║     - ¿El expected_tool es correcto?                                    ║
-║  4. Añade nuevos casos para cubrir patrones que se te escapan.          ║
-║  5. Regla de oro: al menos 3 casos por cada failure mode (F1-F4).       ║
+║  CÓMO MEJORAR ESTE DATASET                                               ║
+║                                                                          ║
+║  1. Ejecuta la evaluación:  python -m techshop_agent.evaluation          ║
+║  2. Revisa los resultados: ¿hay falsos positivos o negativos?            ║
+║  3. Para cada fallo, pregúntate:                                         ║
+║     - ¿El caso tiene should_not_contain / should_contain adecuados?      ║
+║     - ¿Falta una keyword que el agente usa al alucinar?                  ║
+║     - ¿El expected_tool es correcto?                                     ║
+║  4. Añade nuevos casos para cubrir patrones que se te escapan.           ║
+║  5. Regla de oro: al menos 3 casos por cada failure mode (F1-F4).        ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 """
 

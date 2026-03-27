@@ -14,13 +14,13 @@ from langfuse import Evaluation
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  CONFIGURACIÓN TUNABLE — Modifica estas listas para mejorar detección   ║
-# ║                                                                         ║
-# ║  Estas constantes separan los DATOS de la LÓGICA.                       ║
-# ║  Los evaluadores de abajo las consumen; tú solo necesitas editar aquí.  ║
-# ║                                                                         ║
-# ║  EJERCICIO: Ejecuta la evaluación, revisa los falsos positivos/         ║
-# ║  negativos en los resultados, y ajusta estas listas iterativamente.     ║
+# ║  CONFIGURACIÓN TUNEABLE — Modifica estas listas para mejorar detección    ║
+# ║                                                                           ║
+# ║  Estas constantes separan los DATOS de la LÓGICA.                         ║
+# ║  Los evaluadores de abajo las consumen; tú solo necesitas editar aquí.    ║
+# ║                                                                           ║
+# ║  EJERCICIO: Ejecuta la evaluación, revisa los falsos positivos/           ║
+# ║  negativos en los resultados, y ajusta estas listas iterativamente.       ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 

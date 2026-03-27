@@ -11,18 +11,18 @@ Trade-offs:
   - Adds latency and cost (one extra LLM call per item)
 
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║  CÓMO MEJORAR ESTE EVALUADOR                                            ║
-║                                                                         ║
-║  1. RÚBRICA: Modifica _JUDGE_PROMPT abajo. Los niveles de scoring       ║
-║     (1.0, 0.7, 0.5, 0.3, 0.0) determinan la granularidad.              ║
-║     Si ves muchos 0.3 que deberían ser 0.5, refina las descripciones.   ║
-║                                                                         ║
-║  2. MODELO: Cambia JUDGE_MODEL_ID en .env para usar un modelo más       ║
-║     potente o más económico. Haiku es rápido y barato; Sonnet es más    ║
-║     preciso. El trade-off es costo vs calidad del juicio.               ║
-║                                                                         ║
-║  3. GROUND TRUTH: El judge recibe catálogo y FAQs completos.            ║
-║     Si cambias data/catalog.json o data/faqs.json, el judge se adapta.  ║
+║  CÓMO MEJORAR ESTE EVALUADOR                                              ║
+║                                                                           ║
+║  1. RÚBRICA: Modifica _JUDGE_PROMPT abajo. Los niveles de scoring         ║
+║     (1.0, 0.7, 0.5, 0.3, 0.0) determinan la granularidad.                 ║
+║     Si ves muchos 0.3 que deberían ser 0.5, refina las descripciones.     ║
+║                                                                           ║
+║  2. MODELO: Cambia JUDGE_MODEL_ID en .env para usar un modelo más         ║
+║     potente o más económico. Haiku es rápido y barato; Sonnet es más      ║
+║     preciso. El trade-off es costo vs calidad del juicio.                 ║
+║                                                                           ║
+║  3. GROUND TRUTH: El judge recibe catálogo y FAQs completos.              ║
+║     Si cambias data/catalog.json o data/faqs.json, el judge se adapta.    ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 
 Reference: https://langfuse.com/docs/evaluation/evaluation-methods/llm-as-a-judge
