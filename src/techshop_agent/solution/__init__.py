@@ -19,7 +19,7 @@ Contents
 --------
 observability.py
     Fully-observed agent wrapper using ``@observe``, ``propagate_attributes``
-    and ``langfuse.update_current_span``.  Shows the complete tracing tree:
+    and ``lf_client.update_current_span``.  Shows the complete tracing tree:
     trace → observation(span) → tool observations → LLM generation.
 
 prompt_provider.py
@@ -34,7 +34,7 @@ Usage
     from techshop_agent.solution.observability import process_query, get_langfuse_client
     from techshop_agent.solution.prompt_provider import get_system_prompt, FALLBACK_PROMPT
 
-    langfuse = get_langfuse_client()
+    lf_client = get_langfuse_client()
     agent_response = process_query("¿Qué portátiles tenéis?", user_id="u1")
 """
 

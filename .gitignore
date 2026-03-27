@@ -53,3 +53,6 @@ promptfoo-results/
 kahoots/
 slides/
 mdpdf.log
+
+# Internal content docs (hidden from students)
+.content/
