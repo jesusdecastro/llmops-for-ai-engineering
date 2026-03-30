@@ -56,3 +56,6 @@ mdpdf.log
 
 # Internal content docs (hidden from students)
 .content/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
