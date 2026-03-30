@@ -1,7 +1,7 @@
 # Copilot Operating Constitution for this Repository
 
 ## Project overview
-TechShop Agent — a pedagogical AI customer-service agent for an electronics store, built with Python 3.11+, [Strands Agents](https://github.com/strands-agents/sdk-python) on AWS Bedrock, Langfuse observability, LLM Guard safety, and Terraform-managed infrastructure. The agent includes **four deliberate failures** (F1–F4) that students discover and fix through the LLMOps cycle.
+TechShop Agent — a pedagogical AI customer-service agent for an electronics store, built with Python 3.11+, [Strands Agents](https://github.com/strands-agents/sdk-python) on AWS Bedrock, Langfuse observability, Bedrock Guardrails safety, and Terraform-managed infrastructure. The agent includes **four deliberate failures** (F1–F4) that students discover and fix through the LLMOps cycle.
 
 ## Repository layout
 - `src/techshop_agent/` — agent source: `agent.py` (orchestrator), `config.py` (Pydantic settings), `guardrails.py` (input/output safety), `responder.py` (response contract), `data/` (catalog + FAQs JSON).
@@ -57,7 +57,7 @@ Always use `make` targets. Run these from the repository root:
 - Version prompts in Langfuse; reference by name and label, never inline long prompts.
 - Include trace metadata: `session_id`, `user_id`, `input_tokens`, `output_tokens`, `latency_ms`.
 - Use structured `AgentResponse` (Pydantic) for all agent outputs.
-- Add or maintain guardrails for input/output safety via LLM Guard.
+- Add or maintain guardrails for input/output safety via Amazon Bedrock Guardrails.
 - Include adversarial and regression tests for safety-sensitive behaviors.
 - Prefer deterministic structured responses where possible.
 

@@ -16,6 +16,7 @@ def create_agent(
     model_id: str | None = None,
     region: str | None = None,
     system_prompt: str | None = None,
+    tools: list | None = None,
 ) -> Agent:
     """Create and return the TechShop customer service agent.
 
@@ -34,5 +35,5 @@ def create_agent(
     return Agent(
         model=model,
         system_prompt=system_prompt or SYSTEM_PROMPT,
-        tools=[search_catalog, get_faq_answer],
+        tools=tools or [search_catalog, get_faq_answer],
     )

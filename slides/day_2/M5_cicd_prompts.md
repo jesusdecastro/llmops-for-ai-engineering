@@ -226,7 +226,8 @@ Cuando el pipeline promueve un prompt a `production`, la pestaña "Production" d
 | Dataset de evaluación alineado con F1–F4 | `EVAL_DATASET` |
 | Quality gate que bloquea promoción | `evaluate_prompt.py` (exit 0/1) |
 | CI/CD para prompts (no para código) | Scripts Python + Langfuse API |
-| GitHub Actions pipeline | `.github/workflows/prompt-cicd.yml` |
+| GitHub Actions pipeline (CI) | `.github/workflows/prompt-staging.yml` |
+| GitHub Actions pipeline (CD) | `.github/workflows/prompt-production.yml` |
 | GitLab CI pipeline | `.gitlab-ci.yml` |
 | Streamlit con pestañas por entorno | `app.py` con labels dinámicos |
 | CLI para terminal | `python -m techshop_agent.evaluation` |

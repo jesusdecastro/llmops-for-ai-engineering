@@ -168,7 +168,7 @@ make qa   # lint + format-check + typecheck + test + security
 |----|---------|--------------------------|
 | **F1** | Hallucination silenciosa — inventa productos | Langfuse (trace con `results_count=0`) |
 | **F2** | Extrapolación del FAQ — respuestas incorrectas en edge cases | promptfoo + LLM-as-judge |
-| **F3** | Scope creep — responde fuera de dominio | LLM Guard + evaluaciones de scope |
+| **F3** | Scope creep — responde fuera de dominio | Bedrock Guardrails + evaluaciones de scope |
 | **F4** | Tool selection gap — no llama a herramientas para queries válidas | Langfuse (trace sin spans de herramientas) |
 
 ---
@@ -180,7 +180,7 @@ make qa   # lint + format-check + typecheck + test + security
 | [Strands Agents](https://github.com/strands-agents/sdk-python) | Framework del agente |
 | AWS Bedrock (Claude Haiku 4.5) | Modelo de lenguaje |
 | [Langfuse](https://langfuse.com) | Observabilidad + Prompt Management |
-| [LLM Guard](https://llm-guard.com) | Guardrails de seguridad |
+| [Amazon Bedrock Guardrails](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html) | Guardrails de seguridad |
 | [Streamlit](https://streamlit.io) | Interfaz web del agente |
 | [uv](https://docs.astral.sh/uv/) + ruff + pyright | Tooling Python |
 | Terraform + Docker Compose | Infraestructura |
