@@ -2,11 +2,15 @@
 # CI/CD para Prompts — GitLab CI
 # ─────────────────────────────────────────────────────────────
 # Pipeline de 3 stages: push → evaluate → promote
-# Se dispara SOLO cuando cambian archivos en prompts/
+#
+# Triggers:
+#   - Merge Request hacia development (CI: staging + evaluate)
+#   - Push a development (CD: staging + evaluate + promote a production)
+#   - Ejecución manual desde la web (CI/CD → Pipelines → Run pipeline)
 #
 # Variables requeridas (Settings → CI/CD → Variables, con Mask):
 #   LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_BASE_URL
-#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, AWS_DEFAULT_REGION
 # ─────────────────────────────────────────────────────────────
 
 stages:
@@ -24,46 +28,57 @@ stages:
 
 # ─────────────────────────────────────────────────────────────
 # Stage 1: CI — Subir prompt a Langfuse con label "staging"
+# Se ejecuta en: MR → development, push a development, dispatch web
 # ─────────────────────────────────────────────────────────────
 push-prompt:
   <<: *python-setup
   stage: push
   rules:
-    - changes:
+    # Dispatch manual desde la web
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # Merge Request hacia development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "development"
+      changes:
+        - prompts/**
+    # Push a development (merge completado)
+    - if: $CI_COMMIT_BRANCH == "development"
+      changes:
         - prompts/**
   script:
-    - python -m techshop_agent.cicd.push_prompt
-        --file prompts/system_prompt.txt
-        --labels staging latest
-        --author "gitlab-ci[bot]"
+    - bash scripts/cicd/push-prompt.sh prompts/system_prompt.txt "gitlab-ci[bot]"
 
 # ─────────────────────────────────────────────────────────────
 # Stage 2: Quality Gate — Evaluar prompt en staging
+# Se ejecuta en: MR → development, push a development, dispatch web
 # ─────────────────────────────────────────────────────────────
 evaluate-prompt:
   <<: *python-setup
   stage: evaluate
   needs: [push-prompt]
   rules:
-    - changes:
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "development"
+      changes:
+        - prompts/**
+    - if: $CI_COMMIT_BRANCH == "development"
+      changes:
         - prompts/**
   script:
-    - python -m techshop_agent.cicd.evaluate_prompt
-        --label staging
-        --threshold 0.7
+    - bash scripts/cicd/evaluate-prompt.sh staging 0.7
 
 # ─────────────────────────────────────────────────────────────
-# Stage 3: CD — Promover staging → production (solo en main)
+# Stage 3: CD — Promover staging → production
+# Se ejecuta en: push a development (post-merge), dispatch web
+# NO se ejecuta en MRs (solo validación, no deploy)
 # ─────────────────────────────────────────────────────────────
 promote-prompt:
   <<: *python-setup
   stage: promote
   needs: [evaluate-prompt]
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == "development"
       changes:
         - prompts/**
   script:
-    - python -m techshop_agent.cicd.promote_prompt
-        --from-label staging
-        --to-label production
+    - bash scripts/cicd/promote-prompt.sh staging production

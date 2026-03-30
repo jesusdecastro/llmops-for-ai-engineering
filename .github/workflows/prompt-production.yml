@@ -1,15 +1,33 @@
-name: "Prompt CI/CD"
+name: "Prompt CD — Production"
 
 # ─────────────────────────────────────────────────────────────
-# Trigger: solo cuando cambian archivos en prompts/
-# Esto asegura que cambios de código NO disparan este pipeline.
+# CD: Despliegue automático de prompt a producción
+#
+# Flujo:
+#   1. Push a development (merge de PR) → staging → evaluar → producción
+#   2. workflow_dispatch → ejecución manual desde la web
+#
+# Este workflow ejecuta el pipeline completo:
+#   push staging → quality gate → promote a production
+#
+# Solo promueve si la evaluación pasa el umbral de calidad.
 # ─────────────────────────────────────────────────────────────
 on:
   push:
     paths:
       - "prompts/**"
     branches:
-      - main
+      - development
+  workflow_dispatch:
+    inputs:
+      prompt_file:
+        description: "Ruta al archivo de prompt"
+        required: false
+        default: "prompts/system_prompt.txt"
+      threshold:
+        description: "Umbral mínimo de calidad (0.0 – 1.0)"
+        required: false
+        default: "0.7"
 
 # ─────────────────────────────────────────────────────────────
 # Variables de entorno comunes a todos los jobs
@@ -21,11 +39,12 @@ env:
   LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}
 
 jobs:
   # ───────────────────────────────────────────────────────────
-  # Job 1: CI — Subir prompt a Langfuse con label "staging"
+  # Job 1: Push prompt a staging para evaluación
   # ───────────────────────────────────────────────────────────
   push-to-langfuse:
     name: "📤 Push prompt → Langfuse [staging]"
@@ -43,14 +62,10 @@ jobs:
         run: pip install -e ".[llmops]"
 
       - name: Push prompt to Langfuse
-        run: |
-          python -m techshop_agent.cicd.push_prompt \
-            --file prompts/system_prompt.txt \
-            --labels staging latest \
-            --author "github-actions[bot]"
+        run: bash scripts/cicd/push-prompt.sh "${{ inputs.prompt_file || 'prompts/system_prompt.txt' }}" "github-actions[bot]"
 
   # ───────────────────────────────────────────────────────────
-  # Job 2: Quality Gate — Evaluar el prompt en staging
+  # Job 2: Quality Gate — Evaluar prompt en staging
   # ───────────────────────────────────────────────────────────
   evaluate:
     name: "🧪 Evaluate prompt [staging]"
@@ -69,13 +84,10 @@ jobs:
         run: pip install -e ".[llmops]"
 
       - name: Run evaluation suite
-        run: |
-          python -m techshop_agent.cicd.evaluate_prompt \
-            --label staging \
-            --threshold 0.7
+        run: bash scripts/cicd/evaluate-prompt.sh staging "${{ inputs.threshold || '0.7' }}"
 
   # ───────────────────────────────────────────────────────────
-  # Job 3: CD — Promover staging → production
+  # Job 3: CD — Push prompt a production
   # ───────────────────────────────────────────────────────────
   promote:
     name: "🚀 Promote → production"
@@ -94,7 +106,4 @@ jobs:
         run: pip install -e ".[llmops]"
 
       - name: Promote staging to production
-        run: |
-          python -m techshop_agent.cicd.promote_prompt \
-            --from-label staging \
-            --to-label production
+        run: bash scripts/cicd/promote-prompt.sh staging production
