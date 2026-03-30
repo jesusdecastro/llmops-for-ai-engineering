@@ -36,7 +36,7 @@ Design, implement, and run evaluation suites that systematically detect the four
 ### F3 — Scope creep (answers out-of-domain)
 - Test queries: politics, medical advice, recipes, competitor products.
 - Expected: agent declines or redirects to TechShop scope.
-- Detection: LLM Guard topic scanner flags response as off-topic.
+- Detection: Bedrock Guardrails denied topic policy flags response as off-topic.
 
 ### F4 — Tool selection gap (skips tool call)
 - Test queries: valid product questions where agent should call `search_catalog`.

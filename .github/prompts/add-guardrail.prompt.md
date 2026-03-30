@@ -11,25 +11,23 @@ tools:
 
 # Add Guardrail Scanner
 
-Add a new guardrail scanner to the TechShop agent's `GuardrailsManager`.
+Add a new guardrail policy to the TechShop agent's Bedrock Guardrails configuration.
 
 ## Input
 
-Describe which scanner to add: ${input:scanner_type:e.g. PromptInjection, Toxicity, BanTopics, Anonymize, Relevance}
+Describe which policy to add: ${input:policy_type:e.g. content filter, denied topic, word policy, sensitive information}
 
 ## Steps
 
-1. **Read current state**: Review `src/techshop_agent/guardrails.py` and `src/techshop_agent/config.py`.
-2. **Add scanner import**: Import the scanner from `llm_guard` (input scanners from `llm_guard.input_scanners`, output scanners from `llm_guard.output_scanners`).
-3. **Configure scanner**: Add initialization in `GuardrailsManager.__init__()` with configurable thresholds.
-4. **Add to scan pipeline**: Add the scanner call in `scan_input()` or `scan_output()` as appropriate.
-5. **Add `@observe`**: Ensure the scanner call is traced with Langfuse.
-6. **Add config flag**: Add enable/disable flag in `AgentConfig` if not already present.
-7. **Write tests**: Add test cases in `tests/test_guardrails.py`:
-   - Normal input passes the scanner.
-   - Adversarial input is caught by the scanner.
+1. **Read current state**: Review `src/techshop_agent/guardrails.py` and the guardrail configuration in AWS.
+2. **Update AWS guardrail**: Add the new policy to the guardrail in the AWS Console or via `boto3.client('bedrock').update_guardrail()`.
+3. **Update assessment parsing**: If the new policy introduces a new assessment type, update `_parse_assessments()` in `guardrails.py` to extract the triggered names.
+4. **Add `@observe`**: Ensure the scan calls remain traced with Langfuse.
+5. **Write tests**: Add test cases in `tests/test_guardrails.py`:
+   - Normal input passes the guardrail.
+   - Adversarial input is caught by the new policy.
    - Scanner disabled via config skips the check.
-8. **Run QA**: Execute `make qa` to verify.
+6. **Run QA**: Execute `make qa` to verify.
 
 ## Output
 Summarize what was added and the test results.
